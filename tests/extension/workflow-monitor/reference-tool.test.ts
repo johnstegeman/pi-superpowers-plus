@@ -24,9 +24,9 @@ describe("loadReference", () => {
     expect(content).toContain("Too simple to test");
   });
 
-  test("loads tdd-anti-patterns (existing file)", async () => {
+  test("loads tdd-anti-patterns (writing-good-tests content)", async () => {
     const content = await loadReference("tdd-anti-patterns");
-    expect(content).toContain("Anti-Pattern");
+    expect(content).toContain("Name the Break");
   });
 
   test("loads tdd-examples", async () => {

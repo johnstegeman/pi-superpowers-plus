@@ -210,7 +210,7 @@ Serves detailed guidance on demand, keeping skill files lean while making refere
 workflow_reference({ topic: "tdd-rationalizations" })    - Why order matters, excuse table
 workflow_reference({ topic: "tdd-examples" })             - Good/bad code examples, bug fix walkthrough
 workflow_reference({ topic: "tdd-when-stuck" })           - Blocker solutions, verification checklist
-workflow_reference({ topic: "tdd-anti-patterns" })        - Mock pitfalls, test-only methods
+workflow_reference({ topic: "tdd-anti-patterns" })        - Writing good tests: name the break, exercise the real thing, mutation check
 workflow_reference({ topic: "debug-rationalizations" })   - Why investigation-first matters
 workflow_reference({ topic: "debug-tracing" })            - Root cause tracing technique
 workflow_reference({ topic: "debug-defense-in-depth" })   - Multi-layer validation after fix
