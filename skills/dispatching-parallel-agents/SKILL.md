@@ -9,6 +9,8 @@ description: Use when facing 2+ independent tasks that can be worked on without 
 
 ## Overview
 
+You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
+
 When you have multiple unrelated failures (different test files, different subsystems, different bugs), investigating them sequentially wastes time. Each investigation is independent and can happen in parallel.
 
 **Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
@@ -65,19 +67,16 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-**How to dispatch:**
+Issue all three subagent dispatches in the same response — they run in parallel:
 
-Use the `subagent` tool in parallel mode:
-
-```ts
-subagent({
-  tasks: [
-    { agent: "worker", task: "Fix agent-tool-abort.test.ts failures" },
-    { agent: "worker", task: "Fix batch-completion-behavior.test.ts failures" },
-    { agent: "worker", task: "Fix tool-approval-race-conditions.test.ts failures" },
-  ],
-})
+```text
+subagent({ agent: "worker", task: "Fix agent-tool-abort.test.ts failures" })
+subagent({ agent: "worker", task: "Fix batch-completion-behavior.test.ts failures" })
+subagent({ agent: "worker", task: "Fix tool-approval-race-conditions.test.ts failures" })
+# All three run concurrently.
 ```
+
+Multiple dispatch calls in one response = parallel execution. One per response = sequential.
 
 ### 4. Review and Integrate
 
@@ -86,10 +85,6 @@ When agents return:
 - Verify fixes don't conflict
 - Run full test suite
 - Integrate all changes
-
-**If agents edited the same files:** Review manually. Pick the correct version per hunk, or re-run one agent with the other's changes as context. Don't blindly merge.
-
-**If some agents failed:** Integrate successful agents first (commit their work). Then retry the failed agent with fresh context that includes the integrated changes.
 
 ## Agent Prompt Structure
 
@@ -152,14 +147,10 @@ Return: Summary of what you found and what you fixed.
 **Decision:** Independent domains - abort logic separate from batch completion separate from race conditions
 
 **Dispatch:**
-```ts
-subagent({
-  tasks: [
-    { agent: "worker", task: "Fix agent-tool-abort.test.ts" },
-    { agent: "worker", task: "Fix batch-completion-behavior.test.ts" },
-    { agent: "worker", task: "Fix tool-approval-race-conditions.test.ts" },
-  ],
-})
+```
+Agent 1 → Fix agent-tool-abort.test.ts
+Agent 2 → Fix batch-completion-behavior.test.ts
+Agent 3 → Fix tool-approval-race-conditions.test.ts
 ```
 
 **Results:**
@@ -169,8 +160,6 @@ subagent({
 
 **Integration:** All fixes independent, no conflicts, full suite green
 
-**Time saved:** 3 problems solved in parallel vs sequentially
-
 ## Verification
 
 After agents return:
@@ -178,5 +167,3 @@ After agents return:
 2. **Check for conflicts** - Did agents edit same code?
 3. **Run full suite** - Verify all fixes work together
 4. **Spot check** - Agents can make systematic errors
-
-
