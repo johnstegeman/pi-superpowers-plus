@@ -227,12 +227,12 @@ Can't check all boxes? You skipped TDD. Start over.
 
 Bug found? Write failing test reproducing it. Follow TDD cycle. Test proves fix and prevents regression. Never fix bugs without a test.
 
-## Testing Anti-Patterns
+## Writing Good Tests
 
-When adding mocks or test utilities, read `testing-anti-patterns.md` in this skill directory to avoid common pitfalls:
-- Testing mock behavior instead of real behavior
-- Adding test-only methods to production classes
-- Mocking without understanding dependencies
+When writing or changing tests, adding mocks, or adding cleanup/helper methods, read `writing-good-tests.md` in this skill directory. Two principles:
+
+- **Name the break** — every test names the production change that should make it fail (a bug, not a decision); derive expectations by hand, never with the code under test; no change detectors; assert behavior, not source text
+- **Exercise the real thing** — the mock earns no assertions; mock at the right level, mirror real data completely, keep production classes production-only; run the mutation check before finishing
 
 ## Reference
 
@@ -240,7 +240,7 @@ Use `workflow_reference` for additional detail:
 - `tdd-rationalizations` — Extended rationalization discussion
 - `tdd-examples` — More good/bad code examples, bug fix walkthrough
 - `tdd-when-stuck` — Extended solutions for common blockers
-- `tdd-anti-patterns` — Mock pitfalls, test-only methods, incomplete mocks
+- `tdd-anti-patterns` — Writing good tests: name the break, exercise the real thing, mutation check
 
 ## Final Rule
 

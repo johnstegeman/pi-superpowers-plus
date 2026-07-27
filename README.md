@@ -8,7 +8,7 @@ Your coding agent doesn't just know the rules - it follows them. Skills teach th
 
 ## What You Get When You Install This
 
-**12 workflow skills** that guide the agent through a structured development process - from brainstorming ideas through shipping code.
+**13 workflow skills** that guide the agent through a structured development process - from brainstorming ideas through shipping code.
 
 **3 extensions** that run silently in the background:
 - **Workflow Monitor** — warns on TDD violations, tracks debug cycles, gates commits on verification, tracks workflow phase, and serves reference content on demand.
@@ -210,7 +210,7 @@ Serves detailed guidance on demand, keeping skill files lean while making refere
 workflow_reference({ topic: "tdd-rationalizations" })    - Why order matters, excuse table
 workflow_reference({ topic: "tdd-examples" })             - Good/bad code examples, bug fix walkthrough
 workflow_reference({ topic: "tdd-when-stuck" })           - Blocker solutions, verification checklist
-workflow_reference({ topic: "tdd-anti-patterns" })        - Mock pitfalls, test-only methods
+workflow_reference({ topic: "tdd-anti-patterns" })        - Writing good tests: name the break, exercise the real thing, mutation check
 workflow_reference({ topic: "debug-rationalizations" })   - Why investigation-first matters
 workflow_reference({ topic: "debug-tracing" })            - Root cause tracing technique
 workflow_reference({ topic: "debug-defense-in-depth" })   - Multi-layer validation after fix
@@ -257,7 +257,7 @@ A bundled `subagent` tool lets the orchestrating agent spawn isolated subprocess
 | `implementer` | Strict TDD implementation | read, write, edit, bash, lsp | — |
 | `worker` | General-purpose task execution | read, write, edit, bash, lsp | — |
 | `code-reviewer` | Production readiness review | read, bash (read-only) | — |
-| `spec-reviewer` | Plan/spec compliance check | read, bash (read-only) | — |
+| `task-reviewer` | Task review: spec compliance + code quality | read, bash (read-only) | — |
 
 Agent definitions live in `agents/*.md` and use YAML frontmatter to declare tools, model, extensions, and a system prompt body.
 
@@ -308,7 +308,7 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, po
 | | [Superpowers](https://github.com/obra/superpowers) | [pi-superpowers](https://github.com/coctostan/pi-superpowers) | **pi-superpowers-plus** |
 |---|---|---|---|
 | **Platform** | Claude Code | pi | pi |
-| **Skills** | 12 workflow skills | Same 12 skills (pi port) | Same 12 skills (three-scenario TDD, restored inline guidance) |
+| **Skills** | 13 workflow skills | Same 13 skills (pi port) | Same 13 skills (three-scenario TDD, restored inline guidance) |
 | **TDD enforcement** | Skill tells agent the rules | Skill tells agent the rules | Extension *watches* and injects warnings |
 | **TDD widget** | — | — | TUI: RED → GREEN → REFACTOR |
 | **Debug enforcement** | Manual discipline | Manual discipline | Extension escalates after repeated failures |
@@ -328,7 +328,7 @@ pi-superpowers-plus/
 │   ├── implementer.md                 # Strict TDD implementation agent
 │   ├── worker.md                      # General-purpose task agent
 │   ├── code-reviewer.md               # Production readiness reviewer
-│   └── spec-reviewer.md               # Plan/spec compliance reviewer
+│   └── task-reviewer.md               # Task reviewer (spec + code quality)
 ├── extensions/
 │   ├── logging.ts                     # File-based diagnostic logger (10KB truncation, time-based rotation)
 │   ├── plan-tracker.ts                # Task tracking tool + TUI widget
@@ -350,7 +350,8 @@ pi-superpowers-plus/
 │   └── subagent/
 │       ├── index.ts                   # Subagent tool registration + execution
 │       └── agents.ts                  # Agent discovery + frontmatter parsing
-├── skills/                           # 12 workflow skills (24 markdown files)
+├── skills/                           # 13 workflow skills (26 markdown files)
+│   ├── using-superpowers/
 │   ├── brainstorming/
 │   ├── writing-plans/
 │   ├── executing-plans/

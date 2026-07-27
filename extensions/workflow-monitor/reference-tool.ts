@@ -10,7 +10,7 @@ const TOPIC_MAP: Record<string, string> = {
   "tdd-rationalizations": "skills/test-driven-development/reference/rationalizations.md",
   "tdd-examples": "skills/test-driven-development/reference/examples.md",
   "tdd-when-stuck": "skills/test-driven-development/reference/when-stuck.md",
-  "tdd-anti-patterns": "skills/test-driven-development/testing-anti-patterns.md",
+  "tdd-anti-patterns": "skills/test-driven-development/writing-good-tests.md",
   "debug-rationalizations": "skills/systematic-debugging/reference/rationalizations.md",
   "debug-tracing": "skills/systematic-debugging/root-cause-tracing.md",
   "debug-defense-in-depth": "skills/systematic-debugging/defense-in-depth.md",
