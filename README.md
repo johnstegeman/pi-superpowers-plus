@@ -8,7 +8,7 @@ Your coding agent doesn't just know the rules - it follows them. Skills teach th
 
 ## What You Get When You Install This
 
-**12 workflow skills** that guide the agent through a structured development process - from brainstorming ideas through shipping code.
+**13 workflow skills** that guide the agent through a structured development process - from brainstorming ideas through shipping code.
 
 **3 extensions** that run silently in the background:
 - **Workflow Monitor** — warns on TDD violations, tracks debug cycles, gates commits on verification, tracks workflow phase, and serves reference content on demand.
@@ -308,7 +308,7 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, po
 | | [Superpowers](https://github.com/obra/superpowers) | [pi-superpowers](https://github.com/coctostan/pi-superpowers) | **pi-superpowers-plus** |
 |---|---|---|---|
 | **Platform** | Claude Code | pi | pi |
-| **Skills** | 12 workflow skills | Same 12 skills (pi port) | Same 12 skills (three-scenario TDD, restored inline guidance) |
+| **Skills** | 13 workflow skills | Same 13 skills (pi port) | Same 13 skills (three-scenario TDD, restored inline guidance) |
 | **TDD enforcement** | Skill tells agent the rules | Skill tells agent the rules | Extension *watches* and injects warnings |
 | **TDD widget** | — | — | TUI: RED → GREEN → REFACTOR |
 | **Debug enforcement** | Manual discipline | Manual discipline | Extension escalates after repeated failures |
@@ -350,7 +350,8 @@ pi-superpowers-plus/
 │   └── subagent/
 │       ├── index.ts                   # Subagent tool registration + execution
 │       └── agents.ts                  # Agent discovery + frontmatter parsing
-├── skills/                           # 12 workflow skills (24 markdown files)
+├── skills/                           # 13 workflow skills (26 markdown files)
+│   ├── using-superpowers/
 │   ├── brainstorming/
 │   ├── writing-plans/
 │   ├── executing-plans/

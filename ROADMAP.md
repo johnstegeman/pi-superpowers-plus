@@ -164,7 +164,7 @@ Ideas with no timeline. May become milestones, may not.
 
 - **[user]** Decision log / session recap — human-readable summary of workflow decisions, usable as a "here's where you left off" on session rejoin
 - **[user]** Higher-level activity audit trail — record of what the workflow monitor decided and why, reviewable as an end-of-process recap
-- **[maintainer]** Skill consistency pass — normalize wording, boundaries, and stop conditions across all 12 skills
+- **[maintainer]** Skill consistency pass — normalize wording, boundaries, and stop conditions across all 13 skills
 
 ---
 
