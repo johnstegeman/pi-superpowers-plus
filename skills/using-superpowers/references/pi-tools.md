@@ -4,7 +4,7 @@ Skills speak in actions ("dispatch a subagent", "create a todo", "read a file").
 
 | Action skills request | Pi equivalent |
 | --- | --- |
-| Dispatch a subagent (`Subagent (general-purpose):` template) | Use the `subagent` tool (bundled with this package) — single, parallel, and chain modes |
+| Dispatch a subagent (`subagent({ agent, task })` form) | Use the `subagent` tool (bundled with this package) — single, parallel, and chain modes |
 | Task tracking ("create a todo", "mark complete") | Use the `plan_tracker` tool (bundled with this package) — init/update/status/clear actions |
 
 ## Subagents
