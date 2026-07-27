@@ -23,6 +23,12 @@ Dispatch a subagent with this prompt:
 
     **Base:** [BASE_SHA]
     **Head:** [HEAD_SHA]
+    **Diff file:** [DIFF_FILE] (optional — a pre-generated review package path)
+
+    If a diff file is provided, read it once — it contains the commit list,
+    a stat summary, and the full diff with surrounding context, and it is your
+    view of the change. Do not re-run git commands. If no diff file is
+    provided, fetch the diff yourself:
 
     ```bash
     git diff --stat [BASE_SHA]..[HEAD_SHA]
@@ -130,6 +136,7 @@ Dispatch a subagent with this prompt:
 - `[PLAN_OR_REQUIREMENTS]` — what it should do (plan file path, task text, or requirements)
 - `[BASE_SHA]` — starting commit
 - `[HEAD_SHA]` — ending commit
+- `[DIFF_FILE]` — optional: path to a pre-generated review package (commit list + stat summary + full diff). When provided, the reviewer reads it instead of running git diff. Used by subagent-driven-development's final whole-branch review.
 
 **Reviewer returns:** Strengths, Issues (Critical / Important / Minor), Recommendations, Assessment
 
