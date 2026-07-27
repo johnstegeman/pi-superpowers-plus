@@ -257,7 +257,7 @@ A bundled `subagent` tool lets the orchestrating agent spawn isolated subprocess
 | `implementer` | Strict TDD implementation | read, write, edit, bash, lsp | — |
 | `worker` | General-purpose task execution | read, write, edit, bash, lsp | — |
 | `code-reviewer` | Production readiness review | read, bash (read-only) | — |
-| `spec-reviewer` | Plan/spec compliance check | read, bash (read-only) | — |
+| `task-reviewer` | Task review: spec compliance + code quality | read, bash (read-only) | — |
 
 Agent definitions live in `agents/*.md` and use YAML frontmatter to declare tools, model, extensions, and a system prompt body.
 
@@ -328,7 +328,7 @@ pi-superpowers-plus/
 │   ├── implementer.md                 # Strict TDD implementation agent
 │   ├── worker.md                      # General-purpose task agent
 │   ├── code-reviewer.md               # Production readiness reviewer
-│   └── spec-reviewer.md               # Plan/spec compliance reviewer
+│   └── task-reviewer.md               # Task reviewer (spec + code quality)
 ├── extensions/
 │   ├── logging.ts                     # File-based diagnostic logger (10KB truncation, time-based rotation)
 │   ├── plan-tracker.ts                # Task tracking tool + TUI widget
