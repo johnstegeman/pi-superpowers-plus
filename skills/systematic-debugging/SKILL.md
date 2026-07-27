@@ -9,8 +9,6 @@ description: Use when encountering any bug, test failure, or unexpected behavior
 
 ## Overview
 
-Random fixes waste time and create new bugs. Quick patches mask underlying issues.
-
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
 **Violating the letter of this process is violating the spirit of debugging.**
@@ -96,7 +94,7 @@ You MUST complete each phase before proceeding to the next.
 
 2. **Implement Single Fix** — ONE change at a time. No "while I'm here" improvements. No bundled refactoring.
 
-3. **Verify Fix** — Test passes? No other tests broken? Issue actually resolved?
+3. **Verify Fix** — Test passes? No other tests broken? Issue actually resolved? Use `/skill:verification-before-completion` before claiming success.
 
 4. **If Fix Doesn't Work:**
    - If < 3 attempts: Return to Phase 1, re-analyze with new information
