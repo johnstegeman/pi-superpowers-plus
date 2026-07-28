@@ -38,9 +38,9 @@ No configuration required. Skills and extensions activate automatically.
 
 ## Support
 
-- Questions / support: https://github.com/coctostan/pi-superpowers-plus/discussions
-- Bugs: https://github.com/coctostan/pi-superpowers-plus/issues/new/choose
-- Feature requests: https://github.com/coctostan/pi-superpowers-plus/issues/new/choose
+- Questions / support: https://github.com/johnstegeman/pi-superpowers-plus/discussions
+- Bugs: https://github.com/johnstegeman/pi-superpowers-plus/issues/new/choose
+- Feature requests: https://github.com/johnstegeman/pi-superpowers-plus/issues/new/choose
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
