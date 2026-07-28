@@ -16,9 +16,20 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+<HARD-GATE>
+Brainstorming spans many conversation turns, not one. Each checklist item below is real work, not a formality to wave through. Specifically:
+- "Ask clarifying questions" is not satisfied by asking one question. Keep asking, one per turn, across as many real turns as it takes, until you actually understand purpose/constraints/success criteria — and stop after each question to wait for the user's actual reply.
+- Never answer your own question on the user's behalf, assume what they "probably" meant, or draft the rest of the checklist (approaches, design, doc) in the same turn as the question. Each checklist item is completed in its own turn(s), grounded in what the user actually said.
+- Do not mark a checklist item — or the overall brainstorming phase — complete until its real output exists in the conversation: an approved design section, a written+committed spec file, or explicit user sign-off. Marking items complete ahead of that work, or moving on to `writing-plans`/execution because the checklist "looks done," is the failure mode this gate exists to prevent.
+</HARD-GATE>
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+
+## Anti-Pattern: Rushing the Checklist in One Turn
+
+After the user answers a question, it's tempting to treat that as "enough" and fast-forward through proposing approaches, presenting a design, writing the doc, and handing off to `writing-plans` — all without another real exchange. This produces designs nobody actually reviewed. Each of "ask more questions," "propose approaches," and "present design sections" is its own turn (or several); only advance when the user's actual words justify it, never because the checklist item "seems small."
 
 ## Boundaries
 - Read code and docs: yes
@@ -27,10 +38,10 @@ Every project goes through this process. A todo list, a single-function utility,
 
 ## Checklist
 
-You MUST create a task for each of these items and complete them in order:
+You MUST create a task for each of these items and complete them in order. Only mark a task complete once its real output actually exists in the conversation (see the hard-gate above) — never mark several in a row within the same turn.
 
 1. **Explore project context** — check files, docs, recent commits
-2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+2. **Ask clarifying questions** — one at a time, across as many turns as it takes, waiting for the user's actual reply each time, until you understand purpose/constraints/success criteria. Do not mark this task complete after a single question.
 3. **Propose 2-3 approaches** — with trade-offs and your recommendation
 4. **Present design** — in sections scaled to their complexity, get user approval after each section
 5. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
