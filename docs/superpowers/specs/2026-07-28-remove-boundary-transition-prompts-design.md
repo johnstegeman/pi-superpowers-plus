@@ -64,6 +64,41 @@ spontaneously, and they're separate guardrail/nudge features not part of this pr
 - `/execute` editor pre-fill (two execution options), finish-phase reminder pre-fill.
 - All TDD/debug/verification monitor behavior — unrelated to this change.
 
+## Additional bug found during this design: artifact-based phase tracking breaks on absolute paths
+
+While writing this spec (using an absolute path, as the `write` tool actually supplies), the
+`brainstorm` phase never advanced to `active` and no artifact was recorded, even though the file
+landed correctly under `docs/superpowers/specs/`.
+
+**Root cause:** `extensions/workflow-monitor/workflow-tracker.ts` matches artifact writes with
+
+```ts
+const SPECS_DIR_RE = /^docs\/superpowers\/specs\//;
+const PLANS_DIR_RE = /^docs\/superpowers\/plans\//;
+```
+
+anchored to the **start of a relative path**, but `WorkflowTracker.onFileWritten(path)` is fed the
+raw `path` exactly as supplied to the `write`/`edit` tool call (`extensions/workflow-monitor.ts`,
+the `handler.handleFileWritten(filePath)` call). Whenever that path is absolute (as it is for the
+`write`/`edit` tools I actually have), the regex never matches, so the artifact-write phase-tracking
+signal silently never fires. This is one of the three documented phase-detection signals in the
+README ("Artifact writes under `docs/superpowers/specs/` ... and `docs/superpowers/plans/`"), so
+it's a real, load-bearing defect — and it directly undermines the "steps are being correctly
+marked as completed" requirement for this work, since a completed brainstorm can be left showing
+`pending` and trip the (kept) skip-confirmation gate for the wrong reason ("brainstorm is
+unresolved") even though it happened.
+
+**Fix:** at the call site in `extensions/workflow-monitor.ts` (~line 521), reuse the `resolved`
+absolute path already computed a few lines above for the write-boundary check, convert it to a
+cwd-relative, forward-slash-normalized path with `path.relative(process.cwd(), resolved)` (joined
+with `"/"` for cross-platform safety), and pass *that* to `handler.handleFileWritten(...)` instead
+of the raw `filePath`. This keeps `SPECS_DIR_RE`/`PLANS_DIR_RE` anchored and simple while making
+the signal correct regardless of whether the tool call path was relative or absolute.
+
+Scoped in because it's exactly what "verify completion marking is correct" (this design's second
+goal) requires — it's not a new, separate concern, it's the artifact-write half of the same
+requirement whose forward-command half was already verified above.
+
 ## Completion marking (verified, no change needed)
 
 Traced against current code: forward-phase-command marking already works correctly and does not
@@ -92,6 +127,9 @@ forward phase-command" is added as part of this work (see Testing).
 - **Add:** a regression test asserting that an explicit forward phase-command (e.g. `/plan` while
   `brainstorm` is active) marks the earlier phase `complete`, per the Completion Marking section
   above.
+- **Add:** a regression test asserting that writing to `docs/superpowers/specs/...`/
+  `docs/superpowers/plans/...` via an **absolute path** (not just a relative one) records the
+  artifact and advances the phase, per the absolute-path bug fix above.
 - Full suite (`npm test`) must pass with 0 failures before this work is considered done.
 
 ## Docs
