@@ -168,6 +168,15 @@ export default function (pi: ExtensionAPI) {
     finish: "finishing-a-development-branch",
   };
 
+  const PHASE_COMMAND_TO_PHASE: Record<string, Phase> = {
+    "/brainstorm": "brainstorm",
+    "/plan": "plan",
+    "/execute": "execute",
+    "/verify": "verify",
+    "/review": "review",
+    "/finish": "finish",
+  };
+
   function parseTargetPhase(text: string): Phase | null {
     const lines = text.split(/\r?\n/);
     let furthest: Phase | null = null;
@@ -324,6 +333,48 @@ export default function (pi: ExtensionAPI) {
     handler.handleInputText(text);
     persistState();
     updateWidget(ctx);
+  });
+
+  // --- Command-driven phase advancement (e.g. /brainstorm -> /skill:brainstorming) ---
+  pi.on("input", async (event, ctx) => {
+    if (event.source === "extension") return { action: "continue" };
+
+    const text = (event.text as string | undefined) ?? "";
+    const trimmed = text.trim();
+    if (!trimmed) return { action: "continue" };
+
+    const firstLine = trimmed.split(/\r?\n/, 1)[0];
+    const firstToken = firstLine.split(/\s+/, 1)[0];
+
+    const cmdPhase = PHASE_COMMAND_TO_PHASE[firstToken];
+    const skillName = parseSkillName(firstLine);
+    const skillPhase = skillName ? (SKILL_TO_PHASE[skillName] ?? null) : null;
+    const phase = cmdPhase ?? skillPhase;
+
+    if (!phase) return { action: "continue" };
+
+    handler.advanceWorkflowTo(phase);
+    persistState();
+    updateWidget(ctx);
+
+    if (phase === "execute") {
+      const choice =
+        "Implementation phase. Two execution options:\n\n" +
+        "1. /skill:subagent-driven-development (recommended, same session)\n" +
+        "2. /skill:executing-plans (parallel session, batched)\n\n" +
+        "Type the /skill: command for your chosen approach.";
+      if (ctx.hasUI) {
+        ctx.ui.setEditorText(choice);
+        ctx.ui.notify("Stage set to execute. Pick an execution approach.", "info");
+      }
+      return { action: "handled" };
+    }
+
+    if (skillPhase) return { action: "continue" };
+
+    const skill = phaseToSkill[phase];
+    const args = trimmed.slice(firstToken.length).trim();
+    return { action: "transform", text: args ? `/skill:${skill} ${args}` : `/skill:${skill}` };
   });
 
   // --- Completion action gate prompt ---
