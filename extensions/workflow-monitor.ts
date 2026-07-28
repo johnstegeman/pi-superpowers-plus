@@ -177,26 +177,6 @@ export default function (pi: ExtensionAPI) {
     "/finish": "finish",
   };
 
-  function parseTargetPhase(text: string): Phase | null {
-    const lines = text.split(/\r?\n/);
-    let furthest: Phase | null = null;
-    let furthestIdx = -1;
-
-    for (const line of lines) {
-      const skill = parseSkillName(line);
-      if (!skill) continue;
-      const phase = SKILL_TO_PHASE[skill] ?? null;
-      if (!phase) continue;
-      const idx = WORKFLOW_PHASES.indexOf(phase);
-      if (idx > furthestIdx) {
-        furthest = phase;
-        furthestIdx = idx;
-      }
-    }
-
-    return furthest;
-  }
-
   const boundaryToPhase: Record<TransitionBoundary, keyof typeof phaseToSkill> = {
     design_committed: "brainstorm",
     plan_ready: "plan",
@@ -223,39 +203,62 @@ export default function (pi: ExtensionAPI) {
     });
   }
 
-  // --- Input observation (skill detection + skip-confirmation gate) ---
+  // --- Input observation: command-driven phase advancement + skip-confirmation gate ---
   pi.on("input", async (event, ctx) => {
-    if (event.source === "extension") return;
+    if (event.source === "extension") return { action: "continue" };
+
     const text = (event.text as string | undefined) ?? (event.input as string | undefined) ?? "";
+    const trimmed = text.trim();
+    if (!trimmed) return { action: "continue" };
 
-    const targetPhase = parseTargetPhase(text);
+    const firstLine = trimmed.split(/\r?\n/, 1)[0];
+    const firstToken = firstLine.split(/\s+/, 1)[0];
 
-    // If no UI or no target phase, just track and proceed
-    if (!ctx.hasUI || !targetPhase) {
-      if (handler.handleInputText(text)) {
-        persistState();
-        updateWidget(ctx);
+    const cmdPhase = PHASE_COMMAND_TO_PHASE[firstToken];
+    const skillName = parseSkillName(firstLine);
+    const skillPhase = skillName ? (SKILL_TO_PHASE[skillName] ?? null) : null;
+    const phase = cmdPhase ?? skillPhase;
+
+    if (!phase) return { action: "continue" };
+
+    const advance = () => {
+      handler.advanceWorkflowTo(phase);
+      persistState();
+      updateWidget(ctx);
+    };
+
+    const finish = (): { action: "transform" | "continue" | "handled"; text?: string } => {
+      if (phase === "execute") {
+        const choice =
+          "Implementation phase. Two execution options:\n\n" +
+          "1. /skill:subagent-driven-development (recommended, same session)\n" +
+          "2. /skill:executing-plans (parallel session, batched)\n\n" +
+          "Type the /skill: command for your chosen approach.";
+        if (ctx.hasUI) {
+          ctx.ui.setEditorText(choice);
+          ctx.ui.notify("Stage set to execute. Pick an execution approach.", "info");
+        }
+        return { action: "handled" };
       }
-      return;
+
+      if (skillPhase) return { action: "continue" };
+
+      const skill = phaseToSkill[phase];
+      const args = trimmed.slice(firstToken.length).trim();
+      return { action: "transform", text: args ? `/skill:${skill} ${args}` : `/skill:${skill}` };
+    };
+
+    if (!ctx.hasUI) {
+      advance();
+      return finish();
     }
 
     const currentState = handler.getWorkflowState();
-    if (!currentState) {
-      if (handler.handleInputText(text)) {
-        persistState();
-        updateWidget(ctx);
-      }
-      return;
-    }
-
-    const unresolved = getUnresolvedPhasesBefore(targetPhase, currentState);
+    const unresolved = currentState ? getUnresolvedPhasesBefore(phase, currentState) : [];
 
     if (unresolved.length === 0) {
-      if (handler.handleInputText(text)) {
-        persistState();
-        updateWidget(ctx);
-      }
-      return;
+      advance();
+      return finish();
     }
 
     // --- Single unresolved phase ---
@@ -271,16 +274,14 @@ export default function (pi: ExtensionAPI) {
 
       if (choice === "skip") {
         handler.skipWorkflowPhases([missing]);
-        handler.handleInputText(text);
-        persistState();
-        updateWidget(ctx);
-        return;
+        advance();
+        return finish();
       } else if (choice === "do_now") {
         ctx.ui.setEditorText(`/skill:${missingSkill}`);
-        return { blocked: true };
+        return { action: "handled" };
       } else {
         // cancel
-        return { blocked: true };
+        return { action: "handled" };
       }
     }
 
@@ -298,83 +299,42 @@ export default function (pi: ExtensionAPI) {
 
     if (summaryChoice === "skip_all") {
       handler.skipWorkflowPhases(unresolved);
-      handler.handleInputText(text);
-      persistState();
-      updateWidget(ctx);
-      return;
+      advance();
+      return finish();
     } else if (summaryChoice === "cancel") {
-      return { blocked: true };
+      return { action: "handled" };
     }
 
     // review_individually: prompt for each
-    for (const phase of unresolved) {
-      const skill = phaseToSkill[phase] ?? phase;
+    for (const unresolvedPhase of unresolved) {
+      const skill = phaseToSkill[unresolvedPhase] ?? unresolvedPhase;
       const options = [
-        { label: `Do ${phase} now`, value: "do_now" as const },
-        { label: `Skip ${phase}`, value: "skip" as const },
+        { label: `Do ${unresolvedPhase} now`, value: "do_now" as const },
+        { label: `Skip ${unresolvedPhase}`, value: "skip" as const },
         { label: "Cancel", value: "cancel" as const },
       ];
-      const choice = await selectValue(ctx, `Phase "${phase}" is unresolved. What would you like to do?`, options);
+      const choice = await selectValue(
+        ctx,
+        `Phase "${unresolvedPhase}" is unresolved. What would you like to do?`,
+        options,
+      );
 
       if (choice === "skip") {
-        handler.skipWorkflowPhases([phase]);
+        handler.skipWorkflowPhases([unresolvedPhase]);
         persistState();
         updateWidget(ctx);
       } else if (choice === "do_now") {
         ctx.ui.setEditorText(`/skill:${skill}`);
-        return { blocked: true };
+        return { action: "handled" };
       } else {
         // cancel
-        return { blocked: true };
+        return { action: "handled" };
       }
     }
 
     // All individually reviewed (all skipped) - allow transition
-    handler.handleInputText(text);
-    persistState();
-    updateWidget(ctx);
-  });
-
-  // --- Command-driven phase advancement (e.g. /brainstorm -> /skill:brainstorming) ---
-  pi.on("input", async (event, ctx) => {
-    if (event.source === "extension") return { action: "continue" };
-
-    const text = (event.text as string | undefined) ?? "";
-    const trimmed = text.trim();
-    if (!trimmed) return { action: "continue" };
-
-    const firstLine = trimmed.split(/\r?\n/, 1)[0];
-    const firstToken = firstLine.split(/\s+/, 1)[0];
-
-    const cmdPhase = PHASE_COMMAND_TO_PHASE[firstToken];
-    const skillName = parseSkillName(firstLine);
-    const skillPhase = skillName ? (SKILL_TO_PHASE[skillName] ?? null) : null;
-    const phase = cmdPhase ?? skillPhase;
-
-    if (!phase) return { action: "continue" };
-
-    handler.advanceWorkflowTo(phase);
-    persistState();
-    updateWidget(ctx);
-
-    if (phase === "execute") {
-      const choice =
-        "Implementation phase. Two execution options:\n\n" +
-        "1. /skill:subagent-driven-development (recommended, same session)\n" +
-        "2. /skill:executing-plans (parallel session, batched)\n\n" +
-        "Type the /skill: command for your chosen approach.";
-      if (ctx.hasUI) {
-        ctx.ui.setEditorText(choice);
-        ctx.ui.notify("Stage set to execute. Pick an execution approach.", "info");
-      }
-      return { action: "handled" };
-    }
-
-    if (skillPhase) return { action: "continue" };
-
-    const skill = phaseToSkill[phase];
-    const args = trimmed.slice(firstToken.length).trim();
-    return { action: "transform", text: args ? `/skill:${skill} ${args}` : `/skill:${skill}` };
+    advance();
+    return finish();
   });
 
   // --- Completion action gate prompt ---
@@ -592,9 +552,6 @@ export default function (pi: ExtensionAPI) {
     if (event.toolName === "read") {
       // biome-ignore lint/suspicious/noExplicitAny: pi SDK event input type
       const path = ((event.input as Record<string, any>).path as string) ?? "";
-      if (handler.handleSkillFileRead(path)) {
-        persistState();
-      }
       handler.handleReadOrInvestigation("read", path);
     }
 

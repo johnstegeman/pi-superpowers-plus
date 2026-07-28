@@ -21,7 +21,17 @@ function setup() {
 function makeCtx() {
   return {
     hasUI: true,
-    ui: { notify: vi.fn(), setEditorText: vi.fn(), setWidget: () => {} },
+    ui: {
+      notify: vi.fn(),
+      setEditorText: vi.fn(),
+      setWidget: () => {},
+      // Auto-skip any unresolved-phase gate prompts so these tests exercise
+      // only the command/transform behavior, not the skip-confirmation flow
+      // (covered separately in workflow-skip-confirmation.test.ts).
+      select: vi.fn(async (_title: string, labels: string[]) => {
+        return labels.find((l) => l.toLowerCase().startsWith("skip")) ?? labels[labels.length - 1];
+      }),
+    },
     sessionManager: { getBranch: () => [] },
   };
 }
