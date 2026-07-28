@@ -9,8 +9,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Removed the spontaneous "What next?" boundary transition prompts** (Kind A) from the workflow-monitor's workflow tracker. These prompted the agent at every phase boundary with Next step / Fresh session / Skip / Discuss options, but the premise was false in practice — the agent doesn't need to be told to keep going, and the prompt UI collided with the plan-tracker's own end-of-task UX. Phase transitions are now driven entirely by the workflow skills themselves (e.g. `brainstorming` invoking `writing-plans`) and by explicit user commands (`/brainstorm`…`/finish`, `/superpowers stage`, `/workflow-next`); the tracker only tracks state and renders the phase strip in the TUI widget. The skip-confirmation gate (asking whether to do/skip/cancel a still-pending phase before it's skipped) is unaffected and remains the only prompt fired without explicit user action.
+- The finish-phase reminder (nudging the agent to consider doc updates and capture learnings before shipping) is preserved, relocated from the removed boundary-prompt logic into the `/finish` command handler.
+
 ### Fixed
 
+- **Artifact-based phase tracking now uses relative paths.** Detection of spec/plan writes under `docs/superpowers/specs/` and `docs/superpowers/plans/` was comparing against absolute paths, so phase advancement silently failed to fire; fixed to normalize against the workspace-relative path.
 - **Extensions aligned with pi 0.82.1 core packages and API.** Imports rewritten from the deprecated `@mariozechner/*` + `@sinclair/typebox` specifiers to the `@earendil-works/*` + `typebox` names pi 0.82.1 bundles (per `packages.md`), and 0.52.9→0.82.1 API drift a pure rename would have left broken:
   - `session_switch`/`session_fork` events removed in 0.82.1; reconstruction now uses `session_start` (reason `new`/`resume`/`fork`) + `session_tree`, registered per-event so `pi.on`'s per-literal overloads match.
   - `tool_call` handler returns `{ block: true }` (was `{ blocked: true }`, which pi ignores — tool blocking silently never worked).

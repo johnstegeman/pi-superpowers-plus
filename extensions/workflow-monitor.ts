@@ -30,16 +30,13 @@ import {
 } from "./workflow-monitor/warnings";
 import { createWorkflowHandler, type Violation, type WorkflowHandler } from "./workflow-monitor/workflow-handler";
 import {
-  computeBoundaryToPrompt,
   type Phase,
   parseSkillName,
   SKILL_TO_PHASE,
-  type TransitionBoundary,
   WORKFLOW_PHASES,
   WORKFLOW_TRACKER_ENTRY_TYPE,
   type WorkflowTrackerState,
 } from "./workflow-monitor/workflow-tracker";
-import { getTransitionPrompt } from "./workflow-monitor/workflow-transitions";
 
 type SelectOption<T extends string> = { label: string; value: T };
 
@@ -177,14 +174,6 @@ export default function (pi: ExtensionAPI) {
     "/finish": "finish",
   };
 
-  const boundaryToPhase: Record<TransitionBoundary, Phase> = {
-    design_committed: "brainstorm",
-    plan_ready: "plan",
-    execution_complete: "execute",
-    verification_passed: "verify",
-    review_complete: "review",
-  };
-
   // --- State reconstruction on session events ---
   // pi 0.82.1 removed session_switch/session_fork; session_start (reason
   // new/resume/fork) and session_tree cover reconstruction with the new
@@ -240,6 +229,17 @@ export default function (pi: ExtensionAPI) {
         if (ctx.hasUI) {
           ctx.ui.setEditorText(choice);
           ctx.ui.notify("Stage set to execute. Pick an execution approach.", "info");
+        }
+        return { action: "handled" };
+      }
+
+      if (phase === "finish") {
+        const finishReminder =
+          "Before finishing:\n" +
+          "- Does this work require documentation updates? (README, CHANGELOG, API docs, inline docs)\n" +
+          "- What was learned during this implementation? (surprises, codebase knowledge, things to do differently)\n\n";
+        if (ctx.hasUI) {
+          ctx.ui.setEditorText(`${finishReminder}/skill:finishing-a-development-branch`);
         }
         return { action: "handled" };
       }
@@ -518,7 +518,11 @@ export default function (pi: ExtensionAPI) {
           );
         }
 
-        changed = handler.handleFileWritten(filePath) || changed;
+        // Artifact-tracking regexes (SPECS_DIR_RE/PLANS_DIR_RE) are anchored to a
+        // cwd-relative path. Tool calls may supply either a relative or absolute
+        // path, so normalize to cwd-relative + forward slashes before handing off.
+        const relativePath = path.relative(process.cwd(), resolved).split(path.sep).join("/");
+        changed = handler.handleFileWritten(relativePath) || changed;
       }
 
       if (!branchConfirmed) {
@@ -634,65 +638,6 @@ export default function (pi: ExtensionAPI) {
 
     updateWidget(ctx);
     return undefined;
-  });
-
-  // --- Boundary prompting at natural handoff points ---
-  pi.on("agent_end", async (_event, ctx) => {
-    if (!ctx.hasUI) return;
-
-    const latestState = handler.getWorkflowState();
-    if (!latestState) return;
-
-    const boundary = computeBoundaryToPrompt(latestState);
-    if (!boundary) return;
-
-    const boundaryPhase = boundaryToPhase[boundary];
-    const prompt = getTransitionPrompt(boundary, latestState.artifacts[boundaryPhase]);
-
-    const options = prompt.options.map((o) => o.label);
-    const pickedLabel = await ctx.ui.select(prompt.title, options);
-
-    const selected = prompt.options.find((o) => o.label === pickedLabel)?.choice ?? null;
-
-    const marked = handler.markWorkflowPrompted(boundaryPhase);
-    if (marked) {
-      persistState();
-      updateWidget(ctx);
-    }
-
-    const nextSkill = phaseToSkill[prompt.nextPhase] ?? "writing-plans";
-    const nextInSession = `/skill:${nextSkill}`;
-    const fresh = `/workflow-next ${prompt.nextPhase}${prompt.artifactPath ? ` ${prompt.artifactPath}` : ""}`;
-    const finishReminder =
-      "Before finishing:\n" +
-      "- Does this work require documentation updates? (README, CHANGELOG, API docs, inline docs)\n" +
-      "- What was learned during this implementation? (surprises, codebase knowledge, things to do differently)\n\n";
-
-    if (selected === "next") {
-      ctx.ui.setEditorText(prompt.nextPhase === "finish" ? finishReminder + nextInSession : nextInSession);
-    } else if (selected === "fresh") {
-      ctx.ui.setEditorText(prompt.nextPhase === "finish" ? finishReminder + fresh : fresh);
-    } else if (selected === "skip") {
-      // Explicit user-confirmed skip: mark the next phase as skipped, then move on.
-      handler.skipWorkflowPhases([prompt.nextPhase]);
-
-      const nextIdx = WORKFLOW_PHASES.indexOf(prompt.nextPhase);
-      const phaseAfterSkip = WORKFLOW_PHASES[nextIdx + 1] ?? null;
-
-      if (phaseAfterSkip) {
-        const currentState = handler.getWorkflowState();
-        const currentIdx = currentState?.currentPhase ? WORKFLOW_PHASES.indexOf(currentState.currentPhase) : -1;
-        const afterSkipIdx = WORKFLOW_PHASES.indexOf(phaseAfterSkip);
-        if (afterSkipIdx > currentIdx) {
-          handler.advanceWorkflowTo(phaseAfterSkip);
-          const skipSkill = phaseToSkill[phaseAfterSkip] ?? "writing-plans";
-          ctx.ui.setEditorText(`/skill:${skipSkill}`);
-        }
-      }
-
-      persistState();
-      updateWidget(ctx);
-    }
   });
 
   // --- Format violation warning based on type ---

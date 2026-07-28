@@ -130,14 +130,6 @@ describe("WorkflowHandler aggregated state persistence", () => {
           review: null,
           finish: null,
         },
-        prompted: {
-          brainstorm: true,
-          plan: false,
-          execute: false,
-          verify: false,
-          review: false,
-          finish: false,
-        },
       },
       tdd: {
         phase: "green",
@@ -294,14 +286,6 @@ describe("file-based state persistence", () => {
           review: null,
           finish: null,
         },
-        prompted: {
-          brainstorm: true,
-          plan: false,
-          execute: false,
-          verify: false,
-          review: false,
-          finish: false,
-        },
       },
       tdd: {
         phase: "green",
@@ -373,14 +357,6 @@ describe("file-based state persistence", () => {
           review: null,
           finish: null,
         },
-        prompted: {
-          brainstorm: true,
-          plan: false,
-          execute: false,
-          verify: false,
-          review: false,
-          finish: false,
-        },
       },
       tdd: {
         phase: "green",
@@ -426,14 +402,6 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
           verify: null,
           review: null,
           finish: null,
-        },
-        prompted: {
-          brainstorm: true,
-          plan: false,
-          execute: false,
-          verify: false,
-          review: false,
-          finish: false,
         },
       },
       tdd: {
@@ -524,7 +492,6 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
         },
         currentPhase: "brainstorm",
         artifacts: { brainstorm: null, plan: null, execute: null, verify: null, review: null, finish: null },
-        prompted: { brainstorm: false, plan: false, execute: false, verify: false, review: false, finish: false },
       },
       tdd: { phase: "red", testFiles: ["tests/old.test.ts"], sourceFiles: [], redVerificationPending: false },
       debug: { active: false, investigated: false, fixAttempts: 0 },
@@ -550,7 +517,6 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
           review: null,
           finish: null,
         },
-        prompted: { brainstorm: true, plan: false, execute: false, verify: false, review: false, finish: false },
       },
       tdd: {
         phase: "green",

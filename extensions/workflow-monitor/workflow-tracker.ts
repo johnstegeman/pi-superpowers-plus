@@ -9,33 +9,6 @@ export interface WorkflowTrackerState {
   phases: Record<Phase, PhaseStatus>;
   currentPhase: Phase | null;
   artifacts: Record<Phase, string | null>;
-  prompted: Record<Phase, boolean>;
-}
-
-export type TransitionBoundary =
-  | "design_committed"
-  | "plan_ready"
-  | "execution_complete"
-  | "verification_passed"
-  | "review_complete";
-
-export function computeBoundaryToPrompt(state: WorkflowTrackerState): TransitionBoundary | null {
-  if (state.phases.brainstorm === "complete" && !state.prompted.brainstorm) {
-    return "design_committed";
-  }
-  if (state.phases.plan === "complete" && !state.prompted.plan) {
-    return "plan_ready";
-  }
-  if (state.phases.execute === "complete" && !state.prompted.execute) {
-    return "execution_complete";
-  }
-  if (state.phases.verify === "complete" && !state.prompted.verify) {
-    return "verification_passed";
-  }
-  if (state.phases.review === "complete" && !state.prompted.review) {
-    return "review_complete";
-  }
-  return null;
 }
 
 function cloneState(state: WorkflowTrackerState): WorkflowTrackerState {
@@ -47,9 +20,7 @@ function emptyState(): WorkflowTrackerState {
 
   const artifacts = Object.fromEntries(WORKFLOW_PHASES.map((p) => [p, null])) as Record<Phase, string | null>;
 
-  const prompted = Object.fromEntries(WORKFLOW_PHASES.map((p) => [p, false])) as Record<Phase, boolean>;
-
-  return { phases, currentPhase: null, artifacts, prompted };
+  return { phases, currentPhase: null, artifacts };
 }
 
 export const WORKFLOW_TRACKER_ENTRY_TYPE = "workflow_tracker_state";
@@ -147,12 +118,6 @@ export class WorkflowTracker {
   recordArtifact(phase: Phase, path: string): boolean {
     if (this.state.artifacts[phase] === path) return false;
     this.state.artifacts[phase] = path;
-    return true;
-  }
-
-  markPrompted(phase: Phase): boolean {
-    if (this.state.prompted[phase]) return false;
-    this.state.prompted[phase] = true;
     return true;
   }
 

@@ -19,13 +19,10 @@ function createState(overrides: Partial<Record<Phase, PhaseStatus>>): WorkflowTr
 
   const artifacts = Object.fromEntries(WORKFLOW_PHASES.map((phase) => [phase, null])) as Record<Phase, string | null>;
 
-  const prompted = Object.fromEntries(WORKFLOW_PHASES.map((phase) => [phase, false])) as Record<Phase, boolean>;
-
   return {
     phases,
     currentPhase: null,
     artifacts,
-    prompted,
   };
 }
 

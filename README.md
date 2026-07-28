@@ -38,9 +38,9 @@ No configuration required. Skills and extensions activate automatically.
 
 ## Support
 
-- Questions / support: https://github.com/coctostan/pi-superpowers-plus/discussions
-- Bugs: https://github.com/coctostan/pi-superpowers-plus/issues/new/choose
-- Feature requests: https://github.com/coctostan/pi-superpowers-plus/issues/new/choose
+- Questions / support: https://github.com/johnstegeman/pi-superpowers-plus/discussions
+- Bugs: https://github.com/johnstegeman/pi-superpowers-plus/issues/new/choose
+- Feature requests: https://github.com/johnstegeman/pi-superpowers-plus/issues/new/choose
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
@@ -58,7 +58,7 @@ If you're currently using [`pi-superpowers`](https://github.com/coctostan/pi-sup
 - **Three-scenario TDD model** — new feature (full TDD), modifying tested code (run existing tests), trivial change (judgment) — applied consistently across skills, agent profiles, and plan templates
 - **Debug enforcement** escalation after repeated failing tests
 - **Verification gating** for `git commit` / `git push` / `gh pr create` until passing tests are run (suppressed during active plan execution)
-- **Workflow tracking + boundary prompts** (and `/workflow-next` handoff)
+- **Workflow tracking** with TUI phase strip (and `/workflow-next` handoff)
 - **Branch safety reminders** (first tool result shows current branch/SHA; first write/edit warns to confirm branch/worktree)
 - **Finish-phase reminder prefill** (docs + learnings)
 - **Plan Tracker tool** (`plan_tracker`) for task lists + TUI progress
@@ -125,7 +125,7 @@ The **workflow tracker** shows progress in the TUI status bar as the agent moves
 -brainstorm → ✓plan → [execute] → verify → review → finish
 ```
 
-Phases are detected automatically from skill invocations, artifact writes under `docs/superpowers/specs/` and `docs/superpowers/plans/`, and plan tracker initialization. At phase boundaries, the agent is prompted (once) with options to continue, start a fresh session, skip, or discuss.
+Phases are detected automatically from skill invocations, artifact writes under `docs/superpowers/specs/` and `docs/superpowers/plans/`, and plan tracker initialization. The tracker does not proactively prompt at phase boundaries — transitions are driven by the workflow skills themselves, explicit user commands, and (when skipping a pending phase) a skip-confirmation prompt.
 
 ### Supporting Skills
 
@@ -185,11 +185,14 @@ Tracks which workflow phase the agent is in and shows a phase strip in the TUI w
 - `plan_tracker` init calls → execute phase
 - Passing test runs during verify phase → verify complete
 
-At phase boundaries, prompts the agent once (non-enforcing) with options:
-1. **Next step** - continue in the current session
-2. **Fresh session** - hand off to a new session via `/workflow-next`
-3. **Skip** - skip the next phase
-4. **Discuss** - keep chatting
+Phase transitions are driven by the workflow skills themselves (e.g. `brainstorming` invokes
+`writing-plans` on completion) and by explicit user commands (`/brainstorm`…`/finish`,
+`/superpowers stage <phase>`, `/workflow-next`). The tracker does not proactively prompt at phase
+boundaries — it tracks state and displays the phase strip in the TUI widget.
+
+If a phase command or a ship action (`git commit`/`git push`/`gh pr create`) would skip past a
+phase still in `pending` status, a skip-confirmation prompt asks whether to do that phase now,
+skip it, or cancel — this is the only prompt that fires unprompted by explicit user action.
 
 When transitioning into **finish**, the monitor pre-fills the editor with a reminder to consider documentation updates and to capture learnings before merging/shipping.
 
@@ -202,7 +205,7 @@ The `/workflow-next` command starts a new session with artifact context:
 
 Valid phases: `brainstorm`, `plan`, `execute`, `verify`, `review`, `finish`.
 
-> **Note:** `/workflow-next` and `/workflow-reset` are deprecated in favor of the unified `/superpowers` command (subsumed by `/superpowers stage` and `/superpowers reset` respectively). They still work but will be removed in a future release.
+> **Note:** `/workflow-next` and `/workflow-reset` are deprecated in favor of the unified `/superpowers` command (`/superpowers stage` and `/superpowers reset` respectively). They remain available as manual hand-off/reset tools and still work, but will be removed in a future release.
 
 #### Commands
 
@@ -335,7 +338,7 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, po
 | **TDD widget** | — | — | TUI: RED → GREEN → REFACTOR |
 | **Debug enforcement** | Manual discipline | Manual discipline | Extension escalates after repeated failures |
 | **Verification gating** | — | — | Blocks commit/push/PR until tests pass |
-| **Workflow tracking** | — | — | Phase strip, boundary prompts, `/workflow-next` |
+| **Workflow tracking** | — | — | Phase strip, `/workflow-next` |
 | **Subagent dispatch** | — | — | Bundled `subagent` tool + 4 agent definitions |
 | **TDD in subagents** | — | — | Three-scenario TDD instructions in agent profiles + prompt templates + runtime warnings |
 | **Structured results** | — | — | filesChanged, testsRan per agent |
@@ -360,7 +363,6 @@ pi-superpowers-plus/
 │   │   ├── debug-monitor.ts           # Debug mode escalation
 │   │   ├── verification-monitor.ts    # Commit/push/PR gating
 │   │   ├── workflow-tracker.ts        # Workflow phase tracking + parseSkillName
-│   │   ├── workflow-transitions.ts    # Phase boundary prompt definitions
 │   │   ├── workflow-handler.ts        # Testable core logic (combines monitors)
 │   │   ├── heuristics.ts             # File classification (test vs source)
 │   │   ├── test-runner.ts            # Test command/result detection

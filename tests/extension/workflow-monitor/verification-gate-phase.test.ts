@@ -30,7 +30,6 @@ describe("verification gate phase-awareness", () => {
               },
               currentPhase: "brainstorm",
               artifacts: { brainstorm: null, plan: null, execute: null, verify: null, review: null, finish: null },
-              prompted: { brainstorm: false, plan: false, execute: false, verify: false, review: false, finish: false },
             },
           },
         ],

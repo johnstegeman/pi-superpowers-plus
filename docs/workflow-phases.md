@@ -52,13 +52,7 @@ Recommended skill:
 Recommended skill:
 - `/skill:finishing-a-development-branch`
 
-## Boundary prompts and skipping
-
-The workflow-monitor extension can prompt at boundaries (e.g. after `agent_end`) with options like:
-- Next step (this session)
-- Fresh session → next step
-- Skip
-- Discuss
+## Skip confirmation
 
 For some transitions (e.g. attempting to execute without a plan), a **skip-confirmation gate** may appear to ensure skipping is explicit.
 

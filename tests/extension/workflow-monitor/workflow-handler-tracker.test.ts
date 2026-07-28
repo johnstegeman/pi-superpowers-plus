@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { createWorkflowHandler, type WorkflowHandler } from "../../../extensions/workflow-monitor/workflow-handler";
-import { computeBoundaryToPrompt } from "../../../extensions/workflow-monitor/workflow-tracker";
 
 describe("WorkflowHandler workflow-tracker integration", () => {
   let handler: WorkflowHandler;
@@ -14,19 +13,12 @@ describe("WorkflowHandler workflow-tracker integration", () => {
     expect(handler.getWorkflowState()?.currentPhase).toBe("plan");
   });
 
-  test("marks prompted state for boundary phase (not current phase)", () => {
+  test("advanceWorkflowTo(execute) auto-completes the prior active phase", () => {
     handler.advanceWorkflowTo("plan");
     handler.advanceWorkflowTo("execute");
 
-    const stateBefore = handler.getWorkflowState()!;
-    expect(stateBefore.currentPhase).toBe("execute");
-    expect(computeBoundaryToPrompt(stateBefore)).toBe("plan_ready");
-
-    const changed = handler.markWorkflowPrompted("plan");
-    expect(changed).toBe(true);
-
-    const stateAfter = handler.getWorkflowState()!;
-    expect(stateAfter.prompted.plan).toBe(true);
-    expect(computeBoundaryToPrompt(stateAfter)).toBeNull();
+    const state = handler.getWorkflowState()!;
+    expect(state.currentPhase).toBe("execute");
+    expect(state.phases.plan).toBe("complete");
   });
 });
