@@ -15,7 +15,8 @@ import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-age
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { log } from "./logging.js";
-import { getTasks } from "./plan-tracker-state";
+import { renderPlanTrackerWidget } from "./plan-tracker-render";
+import { addTask, clearTasks, getTasks, persistTasks, removeTask, rewindTask, updateTask } from "./plan-tracker-state";
 import { getCurrentGitRef } from "./workflow-monitor/git";
 import { loadReference, REFERENCE_TOPICS } from "./workflow-monitor/reference-tool";
 import { getUnresolvedPhases, getUnresolvedPhasesBefore } from "./workflow-monitor/skip-confirmation";
@@ -860,6 +861,90 @@ export default function (pi: ExtensionAPI) {
 
         if (ctx.hasUI) {
           ctx.ui.notify(`Invalid phase: ${subArg}. Valid: ${WORKFLOW_PHASES.join("|")}`, "error");
+        }
+        return;
+      }
+
+      if (sub === "tasks") {
+        const [taskSub, ...taskRest] = rest;
+        const taskSubArg = taskRest.join(" ").trim();
+
+        const updateTaskWidget = () => {
+          if (!ctx.hasUI) return;
+          const tasks = getTasks();
+          if (tasks.length === 0) {
+            ctx.ui.setWidget("plan_tracker", undefined);
+          } else {
+            ctx.ui.setWidget("plan_tracker", (_tui, theme) => new Text(renderPlanTrackerWidget(tasks, theme), 0, 0));
+          }
+        };
+
+        if (!taskSub || taskSub === "list") {
+          if (ctx.hasUI) ctx.ui.setEditorText(formatTaskListPlain());
+          return;
+        }
+
+        if (taskSub === "add") {
+          if (!taskSubArg) {
+            if (ctx.hasUI) ctx.ui.notify("Task name required: /superpowers tasks add <name>", "error");
+            return;
+          }
+          try {
+            addTask(taskSubArg);
+          } catch (err) {
+            if (ctx.hasUI) ctx.ui.notify((err as Error).message, "error");
+            return;
+          }
+          persistTasks(pi);
+          updateTaskWidget();
+          if (ctx.hasUI) ctx.ui.notify(`Task added: ${taskSubArg}`, "info");
+          return;
+        }
+
+        if (taskSub === "remove" || taskSub === "complete" || taskSub === "rewind") {
+          const idx = Number.parseInt(taskRest[0], 10);
+          if (!Number.isInteger(idx)) {
+            if (ctx.hasUI) ctx.ui.notify(`Task index required: /superpowers tasks ${taskSub} <index>`, "error");
+            return;
+          }
+
+          try {
+            if (taskSub === "remove") {
+              removeTask(idx);
+            } else if (taskSub === "complete") {
+              updateTask(idx, "complete");
+            } else {
+              rewindTask(idx);
+            }
+          } catch (err) {
+            if (ctx.hasUI) ctx.ui.notify((err as Error).message, "error");
+            return;
+          }
+
+          persistTasks(pi);
+          updateTaskWidget();
+          if (ctx.hasUI) {
+            if (taskSub === "remove") {
+              ctx.ui.notify(`Task ${idx} removed.`, "info");
+            } else if (taskSub === "complete") {
+              ctx.ui.notify(`Task ${idx} marked complete.`, "info");
+            } else {
+              ctx.ui.notify(`Rewound to task ${idx} (it and later tasks are pending).`, "info");
+            }
+          }
+          return;
+        }
+
+        if (taskSub === "reset") {
+          clearTasks();
+          persistTasks(pi);
+          updateTaskWidget();
+          if (ctx.hasUI) ctx.ui.notify("All tasks cleared.", "info");
+          return;
+        }
+
+        if (ctx.hasUI) {
+          ctx.ui.notify(`Unknown tasks subcommand: ${taskSub}. Use list|add|remove|complete|reset|rewind.`, "error");
         }
         return;
       }

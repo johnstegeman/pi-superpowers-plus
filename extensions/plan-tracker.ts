@@ -9,9 +9,10 @@
  */
 
 import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, Theme } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
+import { renderPlanTrackerWidget } from "./plan-tracker-render";
 import {
   addTask,
   clearTasks,
@@ -56,30 +57,6 @@ const PlanTrackerParams = Type.Object({
 
 export type PlanTrackerInput = Static<typeof PlanTrackerParams>;
 
-function formatWidget(tasks: Task[], theme: Theme): string {
-  if (tasks.length === 0) return "";
-
-  const complete = tasks.filter((t) => t.status === "complete").length;
-  const icons = tasks
-    .map((t) => {
-      switch (t.status) {
-        case "complete":
-          return theme.fg("success", "✓");
-        case "in_progress":
-          return theme.fg("warning", "→");
-        default:
-          return theme.fg("dim", "○");
-      }
-    })
-    .join("");
-
-  // Find current task (first in_progress, or first pending)
-  const current = tasks.find((t) => t.status === "in_progress") ?? tasks.find((t) => t.status === "pending");
-  const currentName = current ? `  ${current.name}` : "";
-
-  return `${theme.fg("muted", "Tasks:")} ${icons} ${theme.fg("muted", `(${complete}/${tasks.length})`)}${currentName}`;
-}
-
 function formatStatus(tasks: Task[]): string {
   if (tasks.length === 0) return "No plan active.";
 
@@ -106,7 +83,7 @@ export default function (pi: ExtensionAPI) {
       ctx.ui.setWidget("plan_tracker", undefined);
     } else {
       ctx.ui.setWidget("plan_tracker", (_tui, theme) => {
-        return new Text(formatWidget(tasks, theme), 0, 0);
+        return new Text(renderPlanTrackerWidget(tasks, theme), 0, 0);
       });
     }
   };
