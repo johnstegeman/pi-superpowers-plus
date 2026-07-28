@@ -14,8 +14,6 @@ Execute plan by dispatching a fresh implementer subagent per task, a task review
 
 **Core principle:** Fresh subagent per task + task review (spec + quality) + broad final review = high quality, fast iteration
 
-If a tool result contains a ⚠️ workflow warning, stop immediately and address it before continuing.
-
 ## Prerequisites
 - Active branch (not main) or user-confirmed intent to work on main
 - Approved plan or clear task scope

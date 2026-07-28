@@ -1,5 +1,7 @@
 # Roadmap
 
+> **Note:** The Workflow Monitor extension (TDD/debug/verification monitors, workflow phase tracker, `/superpowers`, `/workflow-next`, `/workflow-reset`, `workflow_reference`) described throughout the history below has been **removed entirely**. It caused incorrect phase-tracking behavior (see CHANGELOG) and added enforcement complexity that didn't pay for itself. Discipline now lives entirely in the skill instructions. Items below referencing the workflow monitor are historical record, not current or planned functionality.
+
 This roadmap is **directional** (not a promise). Priorities may shift based on real-world usage and feedback.
 
 - Shipped changes: see [CHANGELOG.md](./CHANGELOG.md)

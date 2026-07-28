@@ -14,8 +14,6 @@ disable-model-invocation: true
 
 **Violating the letter of this rule is violating the spirit of this rule.**
 
-If a tool result contains a ⚠️ workflow warning, stop immediately and address it before continuing.
-
 ## Boundaries
 - Run verification commands: yes
 - Read code and output: yes
@@ -130,6 +128,6 @@ Skip any step = lying, not verifying
 
 ## Enforcement
 
-The workflow-monitor extension monitors `git commit`, `git push`, and `gh pr create`. If you haven't run a passing test suite since your last source file edit, a warning is injected into the tool result. The warning clears automatically after a fresh passing test run.
+Before running `git commit`, `git push`, or `gh pr create`, check for yourself: has a passing test suite run since your last source file edit? If not, run it first — don't rely on tooling to catch this for you.
 
 When all verification passes, mark the verify phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase.
