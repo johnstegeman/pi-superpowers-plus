@@ -363,7 +363,6 @@ pi-superpowers-plus/
 │   │   ├── debug-monitor.ts           # Debug mode escalation
 │   │   ├── verification-monitor.ts    # Commit/push/PR gating
 │   │   ├── workflow-tracker.ts        # Workflow phase tracking + parseSkillName
-│   │   ├── workflow-transitions.ts    # Phase boundary prompt definitions
 │   │   ├── workflow-handler.ts        # Testable core logic (combines monitors)
 │   │   ├── heuristics.ts             # File classification (test vs source)
 │   │   ├── test-runner.ts            # Test command/result detection
