@@ -244,6 +244,17 @@ export default function (pi: ExtensionAPI) {
         return { action: "handled" };
       }
 
+      if (phase === "finish") {
+        const finishReminder =
+          "Before finishing:\n" +
+          "- Does this work require documentation updates? (README, CHANGELOG, API docs, inline docs)\n" +
+          "- What was learned during this implementation? (surprises, codebase knowledge, things to do differently)\n\n";
+        if (ctx.hasUI) {
+          ctx.ui.setEditorText(`${finishReminder}/skill:finishing-a-development-branch`);
+        }
+        return { action: "handled" };
+      }
+
       if (skillPhase) return { action: "continue" };
 
       const skill = phaseToSkill[phase];

@@ -84,11 +84,17 @@ describe("/brainstorm-style phase commands (input transform)", () => {
     expect(getPhase(appended)).toBe("review");
   });
 
-  test("/finish transforms to /skill:finishing-a-development-branch", async () => {
+  test("/finish presents the reminder pre-fill (handled, not transform)", async () => {
     const { inputHandlers, appended } = setup();
-    const result = await runInput(inputHandlers, { text: "/finish", source: "interactive" }, makeCtx());
-    expect(result.action).toBe("transform");
-    expect(result.text).toBe("/skill:finishing-a-development-branch");
+    const ctx = makeCtx();
+    const result = await runInput(inputHandlers, { text: "/finish", source: "interactive" }, ctx);
+    expect(result.action).toBe("handled");
+    expect(ctx.ui.setEditorText).toHaveBeenCalledWith(
+      "Before finishing:\n" +
+        "- Does this work require documentation updates? (README, CHANGELOG, API docs, inline docs)\n" +
+        "- What was learned during this implementation? (surprises, codebase knowledge, things to do differently)\n\n" +
+        "/skill:finishing-a-development-branch",
+    );
     expect(getPhase(appended)).toBe("finish");
   });
 
