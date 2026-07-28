@@ -161,4 +161,39 @@ You are a badly-timed agent.
     expect(agents).toHaveLength(1);
     expect(agents[0].timeout).toBeUndefined();
   });
+
+  test("agent with a model frontmatter field populates AgentConfig.model", () => {
+    writeAgent(
+      tmpDir,
+      "modeled-agent",
+      `---
+name: modeled-agent
+description: Agent with a model
+model: claude-sonnet-4-5
+---
+You are a modeled agent.
+`,
+    );
+
+    const agents = loadAgentsFromDir(tmpDir, "user");
+    expect(agents).toHaveLength(1);
+    expect(agents[0].model).toBe("claude-sonnet-4-5");
+  });
+
+  test("agent without model field has undefined model", () => {
+    writeAgent(
+      tmpDir,
+      "no-model-agent",
+      `---
+name: no-model-agent
+description: Agent without a model
+---
+You are an unmodeled agent.
+`,
+    );
+
+    const agents = loadAgentsFromDir(tmpDir, "user");
+    expect(agents).toHaveLength(1);
+    expect(agents[0].model).toBeUndefined();
+  });
 });

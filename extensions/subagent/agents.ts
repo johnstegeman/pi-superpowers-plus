@@ -78,6 +78,7 @@ export function loadAgentsFromDir(dir: string, source: "user" | "project"): Agen
       description: frontmatter.description,
       tools: tools && tools.length > 0 ? tools : undefined,
       extensions: extensions && extensions.length > 0 ? extensions : undefined,
+      model: frontmatter.model,
       timeout,
       systemPrompt: body,
       source,
