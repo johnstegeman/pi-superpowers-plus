@@ -768,7 +768,7 @@ export default function (pi: ExtensionAPI) {
     });
   }
 
-  // --- Plain-text (theme-free) renderers used by /superpowers (setEditorText) ---
+  // --- Plain-text (theme-free) renderers used by /superpowers (notify) ---
   function formatPhaseStripPlain(state: WorkflowTrackerState | null): string {
     return WORKFLOW_PHASES.map((phase) => {
       const status = state?.phases[phase];
@@ -837,13 +837,17 @@ export default function (pi: ExtensionAPI) {
       const subArg = rest.join(" ");
 
       if (!sub) {
-        if (ctx.hasUI) ctx.ui.setEditorText(buildDashboardText());
+        // Dashboard is read-only status output. Emit it to the chat log via
+        // notify rather than setEditorText, which would dump it into the input
+        // line (where pressing Enter re-submits it as a user message).
+        if (ctx.hasUI) ctx.ui.notify(buildDashboardText(), "info");
         return;
       }
 
       if (sub === "stage") {
         if (!subArg || subArg === "show") {
-          if (ctx.hasUI) ctx.ui.setEditorText(formatPhaseStripPlain(handler.getWorkflowState()));
+          // Read-only status output -> chat log, not the input line.
+          if (ctx.hasUI) ctx.ui.notify(formatPhaseStripPlain(handler.getWorkflowState()), "info");
           return;
         }
 
@@ -888,7 +892,8 @@ export default function (pi: ExtensionAPI) {
         };
 
         if (!taskSub || taskSub === "list") {
-          if (ctx.hasUI) ctx.ui.setEditorText(formatTaskListPlain());
+          // Read-only status output -> chat log, not the input line.
+          if (ctx.hasUI) ctx.ui.notify(formatTaskListPlain(), "info");
           return;
         }
 

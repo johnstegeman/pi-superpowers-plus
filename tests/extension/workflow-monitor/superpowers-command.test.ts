@@ -56,7 +56,7 @@ describe("/superpowers command", () => {
     expect(descriptions.get("superpowers")).toMatch(/status|dashboard/i);
   });
 
-  test("no args renders a status dashboard via setEditorText", async () => {
+  test("no args renders a status dashboard to the chat log via notify (not the input line)", async () => {
     const { commands } = setup();
     const ctx = makeCtx();
 
@@ -64,8 +64,13 @@ describe("/superpowers command", () => {
     expect(handler).toBeDefined();
     await handler!("", ctx);
 
-    expect(ctx.ui.setEditorText).toHaveBeenCalledTimes(1);
-    const text = ctx.ui.setEditorText.mock.calls[0][0] as string;
+    // The dashboard is read-only status output. It must NOT be dumped into the
+    // input editor (where pressing Enter would re-submit it as a user message).
+    // It should be emitted to the chat log via notify.
+    expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
+    const [text, level] = ctx.ui.notify.mock.calls[0];
+    expect(level).toBe("info");
 
     // Tasks section (empty plan)
     expect(text).toMatch(/no plan active/i);
@@ -77,15 +82,17 @@ describe("/superpowers command", () => {
     expect(text).toMatch(/verification/i);
   });
 
-  test("stage show renders the phase strip via setEditorText", async () => {
+  test("stage show renders the phase strip to the chat log via notify (not the input line)", async () => {
     const { commands } = setup();
     const ctx = makeCtx();
 
     const handler = commands.get("superpowers");
     await handler!("stage show", ctx);
 
-    expect(ctx.ui.setEditorText).toHaveBeenCalledTimes(1);
-    const text = ctx.ui.setEditorText.mock.calls[0][0] as string;
+    expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
+    const [text, level] = ctx.ui.notify.mock.calls[0];
+    expect(level).toBe("info");
     expect(text).toMatch(/brainstorm/i);
   });
 
@@ -169,28 +176,32 @@ describe("/superpowers tasks", () => {
     return appendedEntries.filter((e) => e.customType === "plan_tracker_state");
   }
 
-  test("tasks / tasks list renders 'No plan active' when empty", async () => {
+  test("tasks / tasks list renders 'No plan active' to the chat log via notify (not the input line)", async () => {
     const { commands } = setup();
     const ctx = makeCtx();
     const handler = commands.get("superpowers");
 
     await handler!("tasks", ctx);
-    expect(ctx.ui.setEditorText).toHaveBeenCalledTimes(1);
-    expect(ctx.ui.setEditorText.mock.calls[0][0]).toMatch(/no plan active/i);
+    expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
+    expect(ctx.ui.notify.mock.calls[0][0]).toMatch(/no plan active/i);
 
     await handler!("tasks list", ctx);
-    expect(ctx.ui.setEditorText).toHaveBeenCalledTimes(2);
-    expect(ctx.ui.setEditorText.mock.calls[1][0]).toMatch(/no plan active/i);
+    expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(2);
+    expect(ctx.ui.notify.mock.calls[1][0]).toMatch(/no plan active/i);
   });
 
-  test("tasks list renders the task list when non-empty", async () => {
+  test("tasks list renders the task list to the chat log via notify (not the input line)", async () => {
     initTasks(["a", "b"]);
     const { commands } = setup();
     const ctx = makeCtx();
     const handler = commands.get("superpowers");
 
     await handler!("tasks list", ctx);
-    const text = ctx.ui.setEditorText.mock.calls[0][0] as string;
+    expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
+    const text = ctx.ui.notify.mock.calls[0][0] as string;
     expect(text).toMatch(/Plan:/);
     expect(text).toMatch(/\[0\]/);
     expect(text).toMatch(/\[1\]/);
