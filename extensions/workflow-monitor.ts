@@ -15,6 +15,7 @@ import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-age
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { log } from "./logging.js";
+import { getTasks } from "./plan-tracker-state";
 import { getCurrentGitRef } from "./workflow-monitor/git";
 import { loadReference, REFERENCE_TOPICS } from "./workflow-monitor/reference-tool";
 import { getUnresolvedPhases, getUnresolvedPhasesBefore } from "./workflow-monitor/skip-confirmation";
@@ -757,6 +758,120 @@ export default function (pi: ExtensionAPI) {
       return parts.length > 0 ? new Text(parts.join(theme.fg("dim", "  |  ")), 0, 0) : undefined;
     });
   }
+
+  // --- Plain-text (theme-free) renderers used by /superpowers (setEditorText) ---
+  function formatPhaseStripPlain(state: WorkflowTrackerState | null): string {
+    return WORKFLOW_PHASES.map((phase) => {
+      const status = state?.phases[phase];
+      if (state?.currentPhase === phase) return `[${phase}]`;
+      if (status === "complete") return `✓${phase}`;
+      if (status === "skipped") return `–${phase}`;
+      return phase;
+    }).join(" → ");
+  }
+
+  function formatTaskListPlain(): string {
+    const tasks = getTasks();
+    if (tasks.length === 0) return "No plan active.";
+
+    const complete = tasks.filter((t) => t.status === "complete").length;
+    const inProgress = tasks.filter((t) => t.status === "in_progress").length;
+    const pending = tasks.filter((t) => t.status === "pending").length;
+
+    const lines: string[] = [];
+    lines.push(`Plan: ${complete}/${tasks.length} complete (${inProgress} in progress, ${pending} pending)`);
+    lines.push("");
+    tasks.forEach((t, i) => {
+      const icon = t.status === "complete" ? "✓" : t.status === "in_progress" ? "→" : "○";
+      lines.push(`  ${icon} [${i}] ${t.name}`);
+    });
+    return lines.join("\n");
+  }
+
+  function buildDashboardText(): string {
+    const workflow = handler.getWorkflowState();
+    const tddPhase = handler.getTddPhase();
+    const debugActive = handler.isDebugActive();
+    const debugAttempts = handler.getDebugFixAttempts();
+    const full = handler.getFullState();
+    const verificationText = full.verification.verificationWaived
+      ? "Waived"
+      : full.verification.verified
+        ? "Verified"
+        : "Not verified";
+
+    return [
+      "## Superpowers Status",
+      "",
+      "### Workflow",
+      formatPhaseStripPlain(workflow),
+      "",
+      "### Tasks",
+      formatTaskListPlain(),
+      "",
+      "### TDD",
+      `TDD: ${tddPhase.toUpperCase()}`,
+      "",
+      "### Debug",
+      debugActive ? `Debug: Active (${debugAttempts} fix attempts)` : "Debug: Inactive",
+      "",
+      "### Verification",
+      `Verification: ${verificationText}`,
+    ].join("\n");
+  }
+
+  pi.registerCommand("superpowers", {
+    description: "Inspect and control superpowers workflow state (dashboard, tasks, stage, reset)",
+    async handler(args, ctx) {
+      const trimmed = args.trim();
+      const [sub, ...rest] = trimmed.length > 0 ? trimmed.split(/\s+/) : [];
+      const subArg = rest.join(" ");
+
+      if (!sub) {
+        if (ctx.hasUI) ctx.ui.setEditorText(buildDashboardText());
+        return;
+      }
+
+      if (sub === "stage") {
+        if (!subArg || subArg === "show") {
+          if (ctx.hasUI) ctx.ui.setEditorText(formatPhaseStripPlain(handler.getWorkflowState()));
+          return;
+        }
+
+        if (subArg === "reset") {
+          handler.resetWorkflowOnly();
+          persistState();
+          updateWidget(ctx);
+          if (ctx.hasUI) ctx.ui.notify("Workflow stage reset.", "info");
+          return;
+        }
+
+        if ((WORKFLOW_PHASES as readonly string[]).includes(subArg)) {
+          const phase = subArg as Phase;
+          handler.advanceWorkflowTo(phase);
+          persistState();
+          updateWidget(ctx);
+          if (ctx.hasUI) {
+            const skill = phaseToSkill[phase] ?? phase;
+            ctx.ui.notify(`Stage set to ${phase}. Use /skill:${skill} to proceed.`, "info");
+          }
+          return;
+        }
+
+        if (ctx.hasUI) {
+          ctx.ui.notify(`Invalid phase: ${subArg}. Valid: ${WORKFLOW_PHASES.join("|")}`, "error");
+        }
+        return;
+      }
+
+      if (ctx.hasUI) {
+        ctx.ui.notify(
+          `Unknown /superpowers subcommand: ${sub}. Use /superpowers, /superpowers stage, /superpowers tasks, or /superpowers reset.`,
+          "error",
+        );
+      }
+    },
+  });
 
   pi.registerCommand("workflow-reset", {
     description: "Reset workflow tracker to fresh state for a new task",

@@ -88,6 +88,7 @@ export interface WorkflowHandler {
   skipWorkflowPhases(phases: Phase[]): boolean;
   handleSkillFileRead(path: string): boolean;
   resetState(): void;
+  resetWorkflowOnly(): void;
 }
 
 export function createWorkflowHandler(): WorkflowHandler {
@@ -316,6 +317,10 @@ export function createWorkflowHandler(): WorkflowHandler {
       debug.setState(freshState.debug);
       verification.setState(freshState.verification);
       debugFailStreak = 0;
+    },
+
+    resetWorkflowOnly() {
+      tracker.reset();
     },
   };
 }
