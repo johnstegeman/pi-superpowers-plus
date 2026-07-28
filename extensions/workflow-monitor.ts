@@ -949,6 +949,17 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
+      if (sub === "reset") {
+        handler.resetState();
+        clearTasks();
+        persistState();
+        persistTasks(pi);
+        updateWidget(ctx);
+        if (ctx.hasUI) ctx.ui.setWidget("plan_tracker", undefined);
+        if (ctx.hasUI) ctx.ui.notify("All workflow state reset. Ready for a new task.", "info");
+        return;
+      }
+
       if (ctx.hasUI) {
         ctx.ui.notify(
           `Unknown /superpowers subcommand: ${sub}. Use /superpowers, /superpowers stage, /superpowers tasks, or /superpowers reset.`,

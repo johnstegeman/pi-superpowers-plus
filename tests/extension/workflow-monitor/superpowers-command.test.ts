@@ -335,3 +335,94 @@ describe("/superpowers tasks", () => {
     expect(planEntries(appendedEntries).length).toBe(0);
   });
 });
+
+describe("/superpowers reset", () => {
+  beforeEach(() => {
+    clearTasks();
+  });
+
+  function superpowersEntries(appendedEntries: Array<{ customType: string; data: any }>) {
+    return appendedEntries.filter((e) => e.customType === "superpowers_state");
+  }
+
+  function planEntries(appendedEntries: Array<{ customType: string; data: any }>) {
+    return appendedEntries.filter((e) => e.customType === "plan_tracker_state");
+  }
+
+  test("resets the workflow/TDD/debug/verification monitor state", async () => {
+    const { commands, appendedEntries } = setup();
+    const ctx = makeCtx();
+    const handler = commands.get("superpowers");
+
+    await handler!("stage execute", ctx);
+    await handler!("reset", ctx);
+
+    const entries = superpowersEntries(appendedEntries);
+    expect(entries.length).toBeGreaterThan(0);
+    const last = entries.at(-1)!;
+
+    expect(last.data.workflow.currentPhase).toBeNull();
+    for (const phase of ["brainstorm", "plan", "execute", "verify", "review", "finish"]) {
+      expect(last.data.workflow.phases[phase]).toBe("pending");
+    }
+    expect(last.data.tdd.phase).toBe("idle");
+    expect(last.data.debug.active).toBe(false);
+    expect(last.data.verification.verified).toBe(false);
+  });
+
+  test("clears all plan-tracker tasks", async () => {
+    initTasks(["a", "b"]);
+    const { commands, appendedEntries } = setup();
+    const ctx = makeCtx();
+    const handler = commands.get("superpowers");
+
+    await handler!("reset", ctx);
+
+    expect(getTasks()).toEqual([]);
+    const entries = planEntries(appendedEntries);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries.at(-1)!.data).toEqual([]);
+  });
+
+  test("appends both a superpowers_state and a plan_tracker_state entry", async () => {
+    initTasks(["a"]);
+    const { commands, appendedEntries } = setup();
+    const ctx = makeCtx();
+    const handler = commands.get("superpowers");
+
+    await handler!("reset", ctx);
+
+    expect(superpowersEntries(appendedEntries).length).toBeGreaterThan(0);
+    expect(planEntries(appendedEntries).length).toBeGreaterThan(0);
+  });
+
+  test("notifies info with a message mentioning reset", async () => {
+    const { commands } = setup();
+    const ctx = makeCtx();
+    const handler = commands.get("superpowers");
+
+    await handler!("reset", ctx);
+
+    expect(ctx.ui.notify).toHaveBeenCalledTimes(1);
+    const [msg, level] = ctx.ui.notify.mock.calls[0];
+    expect(level).toBe("info");
+    expect(msg).toMatch(/reset/i);
+  });
+
+  test("clears the workflow_monitor widget", async () => {
+    const { commands } = setup();
+    const ctx = makeCtx();
+    const widgetCalls: Array<[string, unknown]> = [];
+    ctx.ui.setWidget = (name: string, render: unknown) => {
+      widgetCalls.push([name, render]);
+    };
+    const handler = commands.get("superpowers");
+
+    await handler!("stage execute", ctx);
+    await handler!("reset", ctx);
+
+    const workflowWidgetCalls = widgetCalls.filter(([name]) => name === "workflow_monitor");
+    expect(workflowWidgetCalls.length).toBeGreaterThan(0);
+    expect(workflowWidgetCalls.at(-1)![1]).toBeUndefined();
+  });
+});
