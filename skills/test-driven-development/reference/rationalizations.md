@@ -1,7 +1,5 @@
 # TDD Rationalizations Reference
 
-**Load via:** `workflow_reference({ topic: "tdd-rationalizations" })`
-
 ## Why Order Matters
 
 **"I'll write tests after to verify it works"**

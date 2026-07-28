@@ -1,7 +1,5 @@
 # TDD Examples Reference
 
-**Load via:** `workflow_reference({ topic: "tdd-examples" })`
-
 ## Good vs Bad Tests
 
 ### RED — Write Failing Test

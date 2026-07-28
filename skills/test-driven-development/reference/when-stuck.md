@@ -1,7 +1,5 @@
 # TDD When Stuck Reference
 
-**Load via:** `workflow_reference({ topic: "tdd-when-stuck" })`
-
 ## When Stuck
 
 | Problem | Solution |

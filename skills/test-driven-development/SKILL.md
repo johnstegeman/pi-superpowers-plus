@@ -236,11 +236,11 @@ When writing or changing tests, adding mocks, or adding cleanup/helper methods, 
 
 ## Reference
 
-Use `workflow_reference` for additional detail:
-- `tdd-rationalizations` — Extended rationalization discussion
-- `tdd-examples` — More good/bad code examples, bug fix walkthrough
-- `tdd-when-stuck` — Extended solutions for common blockers
-- `tdd-anti-patterns` — Writing good tests: name the break, exercise the real thing, mutation check
+For additional detail, read these files in this skill's directory:
+- `reference/rationalizations.md` — Extended rationalization discussion
+- `reference/examples.md` — More good/bad code examples, bug fix walkthrough
+- `reference/when-stuck.md` — Extended solutions for common blockers
+- `writing-good-tests.md` — Writing good tests: name the break, exercise the real thing, mutation check
 
 ## Final Rule
 
