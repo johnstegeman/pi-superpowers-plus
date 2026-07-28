@@ -970,7 +970,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand("workflow-reset", {
-    description: "Reset workflow tracker to fresh state for a new task",
+    description: "Reset workflow tracker to fresh state for a new task (deprecated — use /superpowers reset)",
     async handler(_args, ctx) {
       handler.resetState();
       persistState();
@@ -982,7 +982,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand("workflow-next", {
-    description: "Start a fresh session for the next workflow phase (optionally referencing an artifact path)",
+    description: "Start a fresh session for the next workflow phase (deprecated — use /superpowers stage <phase>)",
     async handler(args, ctx) {
       if (!ctx.hasUI) {
         ctx.ui.notify("workflow-next requires interactive mode", "error");

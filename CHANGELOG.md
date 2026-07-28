@@ -13,6 +13,38 @@ _No changes yet._
 
 ---
 
+## [0.6.0] — 2026-07-29
+
+### Summary
+
+Unified `/superpowers` user command for inspecting and controlling workflow state, subsuming `/workflow-next` and `/workflow-reset`. The plan-tracker migrates to `appendEntry` persistence so slash-command task mutations are durable across session restore/fork.
+
+### Added
+
+- **`/superpowers` command** — unified user command for workflow state:
+  - `/superpowers` — full status dashboard (workflow stage, tasks, TDD phase, debug state, verification).
+  - `/superpowers tasks [list|add|remove|complete|reset|rewind]` — manipulate plan-tracker tasks directly (mutations persist via `plan_tracker_state` appendEntry).
+  - `/superpowers stage [show|<phase>|reset]` — view or advance the workflow stage in place (non-session-spawning counterpart to `/workflow-next`).
+  - `/superpowers reset` — reset all workflow state (workflow + TDD + debug + verification + tasks).
+  - (`/superpowers query` is not implemented; tracked as future work.)
+- **`plan_tracker` tool: `add`/`remove`/`rewind` actions** — the tool can now append a task, remove a task by index, and rewind a task + all later tasks to `pending` (in addition to the existing init/update/status/clear).
+- **`plan-tracker-state.ts` shared module** — the single source of truth for the task list, imported by both the `plan_tracker` tool and the `/superpowers tasks` command. Exports mutators + `persistTasks` (appendEntry) + `reconstructTasksFromBranch` (with legacy tool-result-details fallback).
+- **`plan-tracker-render.ts`** — shared TUI widget renderer used by both the tool and the command.
+- **`resetWorkflowOnly()` handler method** — resets the workflow tracker only (distinct from `resetState`, which resets the monitors too); used by `/superpowers stage reset`.
+
+### Changed
+
+- **Plan-tracker persistence migrated to `appendEntry`** — task state now persists via `pi.appendEntry("plan_tracker_state", tasks)` (mirroring the workflow-monitor's `superpowers_state` pattern), making slash-command task mutations durable across session restore/fork. The `plan_tracker` tool's existing tool-result `details` are preserved for backward compatibility; old sessions reconstruct from legacy `details` until a new mutation appends a `plan_tracker_state` entry.
+- **`plan-tracker.ts` refactored** to a thin wrapper over the shared `plan-tracker-state` module (removed duplicate state/types/reconstruction).
+- **Package version** bumped to `0.6.0`.
+
+### Deprecated
+
+- **`/workflow-next`** — subsumed by `/superpowers stage <phase>` (still works; deprecation notice in its description).
+- **`/workflow-reset`** — subsumed by `/superpowers reset` (still works; deprecation notice in its description). Removal is a future change.
+
+---
+
 ## [0.5.0] — 2026-07-28
 
 ### Summary
