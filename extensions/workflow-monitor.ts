@@ -518,7 +518,11 @@ export default function (pi: ExtensionAPI) {
           );
         }
 
-        changed = handler.handleFileWritten(filePath) || changed;
+        // Artifact-tracking regexes (SPECS_DIR_RE/PLANS_DIR_RE) are anchored to a
+        // cwd-relative path. Tool calls may supply either a relative or absolute
+        // path, so normalize to cwd-relative + forward slashes before handing off.
+        const relativePath = path.relative(process.cwd(), resolved).split(path.sep).join("/");
+        changed = handler.handleFileWritten(relativePath) || changed;
       }
 
       if (!branchConfirmed) {

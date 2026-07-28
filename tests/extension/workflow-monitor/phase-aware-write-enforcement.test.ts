@@ -352,4 +352,22 @@ describe("phase-aware file write enforcement", () => {
     expect(promptCount).toBe(1);
     expect(res).toEqual({ block: true });
   });
+
+  test("writing to an absolute path under docs/superpowers/specs advances the brainstorm phase", async () => {
+    const fake = createFakePi({ withAppendEntry: true });
+    workflowMonitorExtension(fake.api as any);
+
+    const onToolCall = getSingleHandler(fake.handlers, "tool_call");
+    const ctx = { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } };
+
+    const absolutePath = `${process.cwd()}/docs/superpowers/specs/2026-01-01-example-design.md`;
+    await onToolCall(
+      { toolCallId: "w1", toolName: "write", input: { path: absolutePath, content: "# design" } },
+      ctx,
+    );
+
+    const latest = fake.appendedEntries.at(-1)?.data;
+    expect(latest.workflow.phases.brainstorm).toBe("active");
+    expect(latest.workflow.artifacts.brainstorm).toBe("docs/superpowers/specs/2026-01-01-example-design.md");
+  });
 });
