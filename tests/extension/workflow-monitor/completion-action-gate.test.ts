@@ -52,7 +52,7 @@ async function setupExtension(_state: WorkflowTrackerState) {
   const fake = createFakePi({ withAppendEntry: true });
   workflowMonitorExtension(fake.api as any);
 
-  const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+  const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
   const onToolCall = getSingleHandler(fake.handlers, "tool_call");
   const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -117,7 +117,7 @@ describe("completion-action gating on bash commands", () => {
     );
 
     expect(ctx.ui.select).toHaveBeenCalled();
-    expect(result).toEqual({ blocked: true });
+    expect(result).toEqual({ block: true });
     // Editor should be prefilled with verification skill
     expect(editorTexts.length).toBeGreaterThan(0);
     expect(editorTexts.at(-1)).toBe("/skill:verification-before-completion");
@@ -237,7 +237,7 @@ describe("completion-action gating on bash commands", () => {
       ctx,
     );
 
-    expect(result).toEqual({ blocked: true });
+    expect(result).toEqual({ block: true });
   });
 
   test("non-interactive commit path does not prompt and preserves warning behavior", async () => {

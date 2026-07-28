@@ -8,7 +8,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -66,7 +66,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -126,7 +126,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -185,7 +185,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -244,7 +244,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
 
@@ -305,7 +305,7 @@ describe("phase-aware file write enforcement", () => {
     const fake = createFakePi();
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
 
     let promptCount = 0;
@@ -356,6 +356,6 @@ describe("phase-aware file write enforcement", () => {
     );
 
     expect(promptCount).toBe(1);
-    expect(res).toEqual({ blocked: true });
+    expect(res).toEqual({ block: true });
   });
 });

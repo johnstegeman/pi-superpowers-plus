@@ -26,7 +26,7 @@ function setupWithState(_state: WorkflowTrackerState) {
   const fake = createFakePi({ withAppendEntry: true });
   workflowMonitorExtension(fake.api as any);
 
-  const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+  const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
   const onInput = getSingleHandler(fake.handlers, "input");
 
   return { fake, onSessionSwitch, onInput };
@@ -443,7 +443,7 @@ describe("multiline /skill input: gate applies to furthest target phase", () => 
     await onInput(
       {
         source: "user",
-        input: "/skill:writing-plans\nsome text\n/skill:verification-before-completion",
+        text: "/skill:writing-plans\nsome text\n/skill:verification-before-completion",
       },
       ctx,
     );
@@ -580,7 +580,7 @@ describe("multiline /skill input: gate applies to furthest target phase", () => 
     const result = await onInput(
       {
         source: "user",
-        input: "/skill:brainstorming\n/skill:executing-plans",
+        text: "/skill:brainstorming\n/skill:executing-plans",
       },
       ctx,
     );

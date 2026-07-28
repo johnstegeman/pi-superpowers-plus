@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest run",
     "lint": "biome check .",
-    "check": "biome check . && vitest run"
+    "check": "biome check . && tsc --noEmit && vitest run",
+    "check:types": "tsc --noEmit"
   },
   "license": "MIT",
   "author": "coctostan",
@@ -35,13 +36,20 @@
     ]
   },
   "peerDependencies": {
-    "@mariozechner/pi-ai": "*",
-    "@mariozechner/pi-coding-agent": "*",
-    "@mariozechner/pi-tui": "*",
-    "@sinclair/typebox": "*"
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",
+    "@earendil-works/pi-ai": "0.82.1",
+    "@earendil-works/pi-agent-core": "0.82.1",
+    "@earendil-works/pi-coding-agent": "0.82.1",
+    "@earendil-works/pi-tui": "0.82.1",
+    "typebox": "1.1.38",
+    "typescript": "^5.9.0",
     "vitest": "^4.0.18"
   }
 }

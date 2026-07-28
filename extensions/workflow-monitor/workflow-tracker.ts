@@ -1,4 +1,4 @@
-import type { SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 export const WORKFLOW_PHASES = ["brainstorm", "plan", "execute", "verify", "review", "finish"] as const;
 

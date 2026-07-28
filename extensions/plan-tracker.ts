@@ -8,10 +8,10 @@
  * Shows a persistent TUI widget above the editor.
  */
 
-import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
-import { type Static, Type } from "@sinclair/typebox";
+import { StringEnum } from "@earendil-works/pi-ai";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { type Static, Type } from "typebox";
 import { renderPlanTrackerWidget } from "./plan-tracker-render";
 import {
   addTask,
@@ -76,7 +76,7 @@ function formatStatus(tasks: Task[]): string {
 }
 
 export default function (pi: ExtensionAPI) {
-  const updateWidget = (ctx: import("@mariozechner/pi-coding-agent").ExtensionContext) => {
+  const updateWidget = (ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
     const tasks = getTasks();
     if (tasks.length === 0) {
@@ -88,13 +88,16 @@ export default function (pi: ExtensionAPI) {
     }
   };
 
-  // Reconstruct state + widget on session events
-  for (const event of ["session_start", "session_switch", "session_fork", "session_tree"] as const) {
-    pi.on(event, async (_event, ctx) => {
-      reconstructTasksFromBranch(ctx);
-      updateWidget(ctx);
-    });
-  }
+  // Reconstruct state + widget on session events.
+  // pi 0.82.1 removed session_switch/session_fork; session_start (reason
+  // new/resume/fork) and session_tree cover reconstruction with the new
+  // session context. Register per-event so pi.on's per-literal overloads match.
+  const reconstructOnSessionEvent = (ctx: ExtensionContext) => {
+    reconstructTasksFromBranch(ctx);
+    updateWidget(ctx);
+  };
+  pi.on("session_start", (_event, ctx) => reconstructOnSessionEvent(ctx));
+  pi.on("session_tree", (_event, ctx) => reconstructOnSessionEvent(ctx));
 
   pi.registerTool({
     name: "plan_tracker",

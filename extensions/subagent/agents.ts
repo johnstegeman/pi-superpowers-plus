@@ -6,7 +6,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseFrontmatter } from "@mariozechner/pi-coding-agent";
+import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { log } from "../logging.js";
 
 export type AgentScope = "user" | "project" | "both";
@@ -17,6 +17,7 @@ export interface AgentConfig {
   tools?: string[];
   extensions?: string[];
   model?: string;
+  timeout?: number;
   systemPrompt: string;
   source: "user" | "project";
   filePath: string;
@@ -69,6 +70,8 @@ export function loadAgentsFromDir(dir: string, source: "user" | "project"): Agen
       ?.split(",")
       .map((t: string) => t.trim())
       .filter(Boolean);
+    const timeoutRaw = frontmatter.timeout ? Number.parseFloat(frontmatter.timeout) : NaN;
+    const timeout = Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : undefined;
 
     agents.push({
       name: frontmatter.name,
@@ -76,6 +79,7 @@ export function loadAgentsFromDir(dir: string, source: "user" | "project"): Agen
       tools: tools && tools.length > 0 ? tools : undefined,
       extensions: extensions && extensions.length > 0 ? extensions : undefined,
       model: frontmatter.model,
+      timeout,
       systemPrompt: body,
       source,
       filePath,

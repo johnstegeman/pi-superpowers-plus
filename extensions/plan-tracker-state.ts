@@ -6,7 +6,7 @@
 // last plan_tracker_state entry in getBranch() on session events, with a
 // legacy tool-result-details fallback for sessions predating the migration.
 
-import type { CustomEntry, ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { CustomEntry, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 export type TaskStatus = "pending" | "in_progress" | "complete";
 
