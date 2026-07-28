@@ -159,9 +159,15 @@ Shipped:
 Still future:
 - `/superpowers query "<question>"` — explain current state and why we're here (lower priority; static explanation from audit trail, no LLM call)
 
-### Command-driven phase advancement
+### Command-driven phase advancement — ✅ shipped (v0.7.0)
 
-**[user]** Replace heuristic skill detection with explicit commands as the primary phase entry point. Commands like `/brainstorm`, `/plan`, `/execute`, `/verify`, `/review`, `/finish` would atomically: advance the tracker, invoke the corresponding skill, and pre-fill the editor. Skill detection stays as a fallback so tracking isn't lost if someone bypasses the command. Depends on `/superpowers stage` design above.
+**[user]** Replace heuristic skill detection with explicit commands as the primary phase entry point. Commands `/brainstorm`, `/plan`, `/execute`, `/verify`, `/review`, `/finish` atomically advance the tracker and load the corresponding skill (via an `input` transform); `/execute` presents the SDD-vs-executing-plans choice.
+
+The originally proposed skill-detection fallback was dropped — phase advancement is command-only, since hidden skills can't be heuristically detected. `onInputText`/`onSkillFileRead` were removed accordingly.
+
+Still future:
+- `/superpowers query "<question>"` (see above)
+- `/workflow-next` / `/workflow-reset` removal (deprecated, still present)
 
 ### Other ideas
 
