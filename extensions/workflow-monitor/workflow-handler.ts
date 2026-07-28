@@ -75,7 +75,6 @@ export interface WorkflowHandler {
   checkCommitGate(command: string): VerificationViolation | null;
   recordVerificationWaiver(): void;
   restoreTddState(phase: TddPhase, testFiles: string[], sourceFiles: string[], redVerificationPending?: boolean): void;
-  handleInputText(text: string): boolean;
   handleFileWritten(path: string): boolean;
   handlePlanTrackerToolCall(input: Record<string, unknown>): boolean;
   getWorkflowState(): WorkflowTrackerState | null;
@@ -86,7 +85,6 @@ export interface WorkflowHandler {
   completeCurrentWorkflowPhase(): boolean;
   advanceWorkflowTo(phase: Phase): boolean;
   skipWorkflowPhases(phases: Phase[]): boolean;
-  handleSkillFileRead(path: string): boolean;
   resetState(): void;
   resetWorkflowOnly(): void;
 }
@@ -220,10 +218,6 @@ export function createWorkflowHandler(): WorkflowHandler {
       tdd.setState(phase, testFiles, sourceFiles, redVerificationPending);
     },
 
-    handleInputText(text: string) {
-      return tracker.onInputText(text);
-    },
-
     handleFileWritten(path: string) {
       return tracker.onFileWritten(path);
     },
@@ -293,10 +287,6 @@ export function createWorkflowHandler(): WorkflowHandler {
 
     skipWorkflowPhases(phases) {
       return tracker.skipPhases(phases);
-    },
-
-    handleSkillFileRead(path: string) {
-      return tracker.onSkillFileRead(path);
     },
 
     resetState() {

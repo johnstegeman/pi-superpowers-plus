@@ -196,8 +196,8 @@ describe("skip-confirmation gating on /skill transitions", () => {
 
     expect(ctx.ui.select).toHaveBeenCalledTimes(1);
 
-    // Should block by returning { blocked: true }
-    expect(result).toEqual({ blocked: true });
+    // Should block by returning { action: "handled" }
+    expect(result).toEqual({ action: "handled" });
 
     // Editor should be set to the missing phase's skill
     expect(editorTexts.at(-1)).toBe("/skill:writing-plans");
@@ -235,7 +235,7 @@ describe("skip-confirmation gating on /skill transitions", () => {
     const result = await onInput({ source: "user", text: "/skill:executing-plans" }, ctx);
 
     expect(ctx.ui.select).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ blocked: true });
+    expect(result).toEqual({ action: "handled" });
     // Editor should not be touched
     expect(ctx.ui.setEditorText).not.toHaveBeenCalled();
   });
@@ -303,7 +303,7 @@ describe("skip-confirmation gating on /skill transitions", () => {
     const result = await onInput({ source: "user", text: "/skill:executing-plans" }, ctx);
 
     expect(ctx.ui.select).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ blocked: true });
+    expect(result).toEqual({ action: "handled" });
   });
 
   test("multi unresolved + review one-by-one: prompts each, skip individual", async () => {
@@ -379,7 +379,7 @@ describe("skip-confirmation gating on /skill transitions", () => {
 
     // Summary prompt + 1 individual prompt (stops at do_now)
     expect(ctx.ui.select).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ blocked: true });
+    expect(result).toEqual({ action: "handled" });
     expect(editorTexts.at(-1)).toBe("/skill:brainstorming");
   });
 
@@ -416,7 +416,7 @@ describe("skip-confirmation gating on /skill transitions", () => {
 });
 
 describe("multiline /skill input: gate applies to furthest target phase", () => {
-  test("input with earlier skill on first line and farther skill on later line gates to farther phase", async () => {
+  test("only the first line's skill is considered for gating (later lines are ignored)", async () => {
     const state = createWorkflowState({ brainstorm: "complete" }, "brainstorm");
     const { fake, onSessionSwitch, onInput } = setupWithState(state);
 
@@ -448,13 +448,12 @@ describe("multiline /skill input: gate applies to furthest target phase", () => 
       ctx,
     );
 
-    // Gate should have fired because plan and execute are unresolved before verify
-    expect(ctx.ui.select).toHaveBeenCalled();
+    // Only the first line ("/skill:writing-plans" -> plan) is considered; brainstorm is
+    // already complete, so there's nothing unresolved before plan and no gate fires.
+    expect(ctx.ui.select).not.toHaveBeenCalled();
 
     const latest = fake.appendedEntries.at(-1)?.data;
-    expect(latest.workflow.phases.plan).toBe("skipped");
-    expect(latest.workflow.phases.execute).toBe("skipped");
-    expect(latest.workflow.currentPhase).toBe("verify");
+    expect(latest.workflow.currentPhase).toBe("plan");
   });
 
   test("single-line earlier skill does not silently bypass gate for later phases", async () => {
@@ -554,7 +553,7 @@ describe("multiline /skill input: gate applies to furthest target phase", () => 
     expect(selectCalled).toBe(true);
   });
 
-  test("multiline input blocks when farther phase has unresolved predecessors", async () => {
+  test("multiline input gates only on the first line's target phase", async () => {
     const state = createWorkflowState({}, null);
     const { fake, onSessionSwitch, onInput } = setupWithState(state);
 
@@ -586,7 +585,11 @@ describe("multiline /skill input: gate applies to furthest target phase", () => 
       ctx,
     );
 
-    expect(ctx.ui.select).toHaveBeenCalled();
-    expect(result).toEqual({ blocked: true });
+    // First line targets "brainstorm", which has no predecessors, so no gate fires.
+    expect(ctx.ui.select).not.toHaveBeenCalled();
+    expect(result).toEqual({ action: "continue" });
+
+    const latest = fake.appendedEntries.at(-1)?.data;
+    expect(latest.workflow.currentPhase).toBe("brainstorm");
   });
 });

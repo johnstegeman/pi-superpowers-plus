@@ -213,6 +213,17 @@ The `/superpowers` command is the single entry point for inspecting and controll
 - `/superpowers stage [show|<phase>|reset]` — view or advance the workflow stage.
 - `/superpowers reset` — reset all workflow state (stage, monitors, tasks).
 
+**Phase commands** advance the workflow tracker and load the corresponding skill on demand:
+
+- `/brainstorm` — load the brainstorming skill and advance to the brainstorm phase
+- `/plan` — load the writing-plans skill and advance to the plan phase
+- `/execute` — advance to execute; presents SDD vs executing-plans choice
+- `/verify` — load the verification-before-completion skill and advance to verify
+- `/review` — load the requesting-code-review skill and advance to review
+- `/finish` — load the finishing-a-development-branch skill and advance to finish
+
+Phase skills are hidden from the system prompt (context-clean); they load on-demand via these commands. Supporting skills (TDD, debugging, worktrees, etc.) stay auto-invocable.
+
 #### Reference Tool
 
 Serves detailed guidance on demand, keeping skill files lean while making reference content available when the agent needs it:

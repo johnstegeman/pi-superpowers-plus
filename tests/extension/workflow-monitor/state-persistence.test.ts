@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, test, vi } from "vitest";
 import * as logging from "../../../extensions/logging";
-import workflowMonitorExtension, { getStateFilePath, reconstructState } from "../../../extensions/workflow-monitor";
+import { getStateFilePath, reconstructState } from "../../../extensions/workflow-monitor";
 import { DebugMonitor } from "../../../extensions/workflow-monitor/debug-monitor";
 import {
   createWorkflowHandler,
@@ -13,7 +13,7 @@ import {
 } from "../../../extensions/workflow-monitor/workflow-handler";
 import { VerificationMonitor } from "../../../extensions/workflow-monitor/verification-monitor";
 import { WORKFLOW_TRACKER_ENTRY_TYPE, WorkflowTracker } from "../../../extensions/workflow-monitor/workflow-tracker";
-import { createFakePi, getSingleHandler, withTempCwd } from "./test-helpers";
+import { withTempCwd } from "./test-helpers";
 
 describe("DebugMonitor state persistence", () => {
   test("getState returns serializable monitor state", () => {
@@ -79,7 +79,7 @@ describe("WorkflowHandler aggregated state persistence", () => {
   test("getFullState aggregates workflow, tdd, debug, and verification state", () => {
     const handler = createWorkflowHandler();
 
-    handler.handleInputText("/skill:writing-plans");
+    handler.advanceWorkflowTo("plan");
     handler.handleBashResult("npx vitest run", "FAIL", 1);
     handler.handleBashResult("npx vitest run", "FAIL", 1);
     handler.handleReadOrInvestigation("read", "extensions/workflow-monitor/workflow-handler.ts");
@@ -168,7 +168,7 @@ describe("WorkflowHandler aggregated state persistence", () => {
   test("round-trips full state snapshot", () => {
     const source = createWorkflowHandler();
 
-    source.handleInputText("/skill:writing-plans");
+    source.advanceWorkflowTo("plan");
     source.restoreTddState("refactor", ["tests/r.test.ts"], ["src/r.ts"], false);
     source.handleBashResult("npx vitest run", "FAIL", 1);
     source.handleBashResult("npx vitest run", "FAIL", 1);
@@ -224,19 +224,10 @@ describe("WorkflowHandler aggregated state persistence", () => {
     });
   });
 
-  test("handleSkillFileRead delegates to workflow tracker", () => {
-    const handler = createWorkflowHandler();
-
-    const changed = handler.handleSkillFileRead("/home/pi/workspace/pi-superpowers-plus/skills/writing-plans/SKILL.md");
-
-    expect(changed).toBe(true);
-    expect(handler.getWorkflowState()?.currentPhase).toBe("plan");
-  });
-
   test("resetState restores all subsystems to defaults", () => {
     const handler = createWorkflowHandler();
 
-    handler.handleInputText("/skill:writing-plans");
+    handler.advanceWorkflowTo("plan");
     handler.restoreTddState("green", ["tests/x.test.ts"], ["src/x.ts"], false);
     handler.setFullState({
       workflow: handler.getWorkflowState()!,
@@ -496,7 +487,7 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
 
   test("reconstructs fresh defaults when branch has no persisted state entries", () => {
     const handler = createWorkflowHandler();
-    handler.handleInputText("/skill:writing-plans");
+    handler.advanceWorkflowTo("plan");
     handler.restoreTddState("green", ["tests/a.test.ts"], ["src/a.ts"], false);
     handler.recordVerificationWaiver();
 
@@ -586,34 +577,5 @@ describe("workflow-monitor state reconstruction + persistence wiring", () => {
     );
 
     expect(handler.getFullState()).toEqual(newer);
-  });
-
-  test("persists when a skill file is read via read tool result", async () => {
-    const fake = createFakePi({ withAppendEntry: true });
-    const tempDir = process.cwd(); // createFakePi already called withTempCwd()
-    workflowMonitorExtension(fake.api as any);
-
-    const onToolResult = getSingleHandler(fake.handlers, "tool_result");
-
-    await onToolResult(
-      {
-        toolCallId: "call-1",
-        toolName: "read",
-        input: { path: "/home/pi/workspace/pi-superpowers-plus/skills/writing-plans/SKILL.md" },
-        content: [{ type: "text", text: "ok" }],
-        details: {},
-      },
-      { hasUI: false, sessionManager: { getBranch: () => [] }, ui: { setWidget: () => {} } },
-    );
-
-    expect(fake.appendedEntries.length).toBe(1);
-    expect(fake.appendedEntries[0]?.customType).toBe("superpowers_state");
-    expect(fake.appendedEntries[0]?.data.workflow.currentPhase).toBe("plan");
-
-    const statePath = path.join(tempDir, ".pi", "superpowers-state.json");
-    expect(fs.existsSync(statePath)).toBe(true);
-
-    const persisted = JSON.parse(fs.readFileSync(statePath, "utf-8"));
-    expect(persisted.workflow.currentPhase).toBe("plan");
   });
 });

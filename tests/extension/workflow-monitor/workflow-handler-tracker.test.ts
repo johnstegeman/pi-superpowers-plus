@@ -9,14 +9,14 @@ describe("WorkflowHandler workflow-tracker integration", () => {
     handler = createWorkflowHandler();
   });
 
-  test("input /skill:writing-plans activates plan phase", () => {
-    handler.handleInputText("/skill:writing-plans");
+  test("advanceWorkflowTo(plan) activates plan phase", () => {
+    handler.advanceWorkflowTo("plan");
     expect(handler.getWorkflowState()?.currentPhase).toBe("plan");
   });
 
   test("marks prompted state for boundary phase (not current phase)", () => {
-    handler.handleInputText("/skill:writing-plans");
-    handler.handleInputText("/skill:executing-plans");
+    handler.advanceWorkflowTo("plan");
+    handler.advanceWorkflowTo("execute");
 
     const stateBefore = handler.getWorkflowState()!;
     expect(stateBefore.currentPhase).toBe("execute");

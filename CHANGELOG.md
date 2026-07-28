@@ -13,6 +13,27 @@ _No changes yet._
 
 ---
 
+## [0.7.0] — 2026-07-29
+
+### Summary
+
+Command-driven workflow: the 7 phase skills leave the system prompt (context-clean) and are entered via `/brainstorm`-style commands that load them on demand. Heuristic skill detection removed (command-only).
+
+### Added
+
+- **Phase commands** — `/brainstorm`, `/plan`, `/execute`, `/verify`, `/review`, `/finish`: advance the workflow tracker and load the corresponding skill (via an `input` transform that rewrites `/brainstorm` → `/skill:brainstorming` before skill expansion; args preserved). `/execute` presents the SDD-vs-executing-plans choice. Skip-confirmation fires when a command jumps past unresolved phases.
+- **`disable-model-invocation: true`** on the 7 phase skills — they no longer appear in the system prompt; only loadable via `/skill:` or the phase commands. Supporting skills (TDD, debugging, worktrees, etc.) stay model-invocable.
+
+### Changed
+
+- **Skip-confirmation rewired** into the `input` transform (single entry point for phase advancement; recognizes both the new commands and direct `/skill:` invocations).
+
+### Removed
+
+- **`WorkflowTracker.onInputText` + `onSkillFileRead`** — heuristic skill detection removed (command-only; hidden skills can't be auto-detected). `parseSkillName`/`SKILL_TO_PHASE` kept as utilities; `onFileWritten` (artifact detection) kept.
+
+---
+
 ## [0.6.0] — 2026-07-29
 
 ### Summary

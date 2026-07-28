@@ -1,6 +1,7 @@
 ---
 name: writing-plans
 description: Use when you have a spec or requirements for a multi-step task, before touching code
+disable-model-invocation: true
 ---
 
 > **Related skills:** Did you `/skill:brainstorming` first? Ready to implement? Use `/skill:executing-plans` or `/skill:subagent-driven-development`.
@@ -176,3 +177,5 @@ Then offer execution choice:
 **If Parallel Session chosen:**
 - Guide them to open new session in worktree
 - **REQUIRED SUB-SKILL:** New session uses `/skill:executing-plans`
+
+Alternatively, use `/execute` to enter the execution phase (presents both options).

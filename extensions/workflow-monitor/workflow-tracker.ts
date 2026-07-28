@@ -156,29 +156,6 @@ export class WorkflowTracker {
     return true;
   }
 
-  onInputText(text: string): boolean {
-    const lines = text.split(/\r?\n/);
-    let changed = false;
-
-    for (const line of lines) {
-      const skill = parseSkillName(line);
-      if (!skill) continue;
-      const phase = SKILL_TO_PHASE[skill] ?? null;
-
-      if (phase && this.advanceTo(phase)) changed = true;
-    }
-
-    return changed;
-  }
-
-  onSkillFileRead(path: string): boolean {
-    const match = path.match(/\/skills\/([^/]+)\/SKILL\.md$/);
-    if (!match) return false;
-    const phase = SKILL_TO_PHASE[match[1]];
-    if (!phase) return false;
-    return this.advanceTo(phase);
-  }
-
   onFileWritten(path: string): boolean {
     if (SPECS_DIR_RE.test(path)) {
       const changedArtifact = this.recordArtifact("brainstorm", path);
