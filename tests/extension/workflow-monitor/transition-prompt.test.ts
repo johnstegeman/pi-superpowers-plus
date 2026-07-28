@@ -55,7 +55,7 @@ describe("boundary prompting", () => {
     const fake = createFakePi({ withAppendEntry: true });
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
 
     let agentEndSelectCalls = 0;
@@ -104,7 +104,7 @@ describe("boundary prompting", () => {
     const fake = createFakePi({ withAppendEntry: true });
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
 
     const editorTexts: string[] = [];
@@ -153,7 +153,7 @@ describe("boundary prompting", () => {
     const fake = createFakePi({ withAppendEntry: true });
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
 
     const editorTexts: string[] = [];
@@ -215,7 +215,7 @@ describe("boundary prompting", () => {
     const fake = createFakePi({ withAppendEntry: true });
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
 
     const ctx = {
@@ -311,7 +311,7 @@ describe("boundary prompting", () => {
     const fake = createFakePi({ withAppendEntry: true });
     workflowMonitorExtension(fake.api as any);
 
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
     const onAgentEnd = getSingleHandler(fake.handlers, "agent_end");
 
     const editorTexts: string[] = [];

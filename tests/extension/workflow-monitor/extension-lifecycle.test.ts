@@ -49,7 +49,7 @@ describe("workflow-monitor extension lifecycle", () => {
     const ctx = { hasUI: false, sessionManager: { getBranch: () => [] } };
     const onToolCall = getSingleHandler(fake.handlers, "tool_call");
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
 
     // Queue a violation from tool_call.
     await onToolCall({ toolName: "write", input: { path: "src/foo.ts" } }, ctx);
@@ -76,5 +76,16 @@ describe("workflow-monitor extension lifecycle", () => {
       expect(text).not.toContain("TDD/Debug policy violation detected");
       expect(text).not.toContain("Fix attempt");
     }
+  });
+
+  test("reconstructs on 0.82.1 session events (session_start, session_tree) — not the removed session_switch/session_fork", () => {
+    const fake = createFakePi();
+    workflowMonitorExtension(fake.api as any);
+    // pi 0.82.1 removed the post-action session_switch/session_fork events.
+    // session_start (reason new/resume/fork) and session_tree cover reconstruction.
+    expect(fake.handlers.has("session_start")).toBe(true);
+    expect(fake.handlers.has("session_tree")).toBe(true);
+    expect(fake.handlers.has("session_switch")).toBe(false);
+    expect(fake.handlers.has("session_fork")).toBe(false);
   });
 });

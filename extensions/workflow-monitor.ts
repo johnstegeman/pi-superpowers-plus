@@ -10,10 +10,10 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { StringEnum } from "@earendil-works/pi-ai";
+import type { ExtensionAPI, ExtensionContext, InputEventResult, ThemeColor } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
+import { Type } from "typebox";
 import { log } from "./logging.js";
 import { renderPlanTrackerWidget } from "./plan-tracker-render";
 import { addTask, clearTasks, getTasks, persistTasks, removeTask, rewindTask, updateTask } from "./plan-tracker-state";
@@ -177,7 +177,7 @@ export default function (pi: ExtensionAPI) {
     "/finish": "finish",
   };
 
-  const boundaryToPhase: Record<TransitionBoundary, keyof typeof phaseToSkill> = {
+  const boundaryToPhase: Record<TransitionBoundary, Phase> = {
     design_committed: "brainstorm",
     plan_ready: "plan",
     execution_complete: "execute",
@@ -186,28 +186,31 @@ export default function (pi: ExtensionAPI) {
   };
 
   // --- State reconstruction on session events ---
-  for (const event of ["session_start", "session_switch", "session_fork", "session_tree"] as const) {
-    pi.on(event, async (_event, ctx) => {
-      reconstructState(ctx, handler);
-      pendingViolations.clear();
-      pendingVerificationViolations.clear();
-      pendingBranchGates.clear();
-      pendingProcessWarnings.clear();
-      strikes.process = 0;
-      strikes.practice = 0;
-      delete sessionAllowed.process;
-      delete sessionAllowed.practice;
-      branchNoticeShown = false;
-      branchConfirmed = false;
-      updateWidget(ctx);
-    });
-  }
+  // pi 0.82.1 removed session_switch/session_fork; session_start (reason
+  // new/resume/fork) and session_tree cover reconstruction with the new
+  // session context. Register per-event so pi.on's per-literal overloads match.
+  const reconstructOnSessionEvent = (ctx: ExtensionContext) => {
+    reconstructState(ctx, handler);
+    pendingViolations.clear();
+    pendingVerificationViolations.clear();
+    pendingBranchGates.clear();
+    pendingProcessWarnings.clear();
+    strikes.process = 0;
+    strikes.practice = 0;
+    delete sessionAllowed.process;
+    delete sessionAllowed.practice;
+    branchNoticeShown = false;
+    branchConfirmed = false;
+    updateWidget(ctx);
+  };
+  pi.on("session_start", (_event, ctx) => reconstructOnSessionEvent(ctx));
+  pi.on("session_tree", (_event, ctx) => reconstructOnSessionEvent(ctx));
 
   // --- Input observation: command-driven phase advancement + skip-confirmation gate ---
   pi.on("input", async (event, ctx) => {
     if (event.source === "extension") return { action: "continue" };
 
-    const text = (event.text as string | undefined) ?? (event.input as string | undefined) ?? "";
+    const text = event.text;
     const trimmed = text.trim();
     if (!trimmed) return { action: "continue" };
 
@@ -227,7 +230,7 @@ export default function (pi: ExtensionAPI) {
       updateWidget(ctx);
     };
 
-    const finish = (): { action: "transform" | "continue" | "handled"; text?: string } => {
+    const finish = (): InputEventResult => {
       if (phase === "execute") {
         const choice =
           "Implementation phase. Two execution options:\n\n" +
@@ -452,7 +455,7 @@ export default function (pi: ExtensionAPI) {
           if (unresolved.length > 0) {
             const gateResult = await promptCompletionGate(unresolved, ctx);
             if (gateResult === "blocked") {
-              return { blocked: true };
+              return { block: true };
             }
             if (unresolved.includes("verify")) {
               handler.recordVerificationWaiver();
@@ -504,7 +507,7 @@ export default function (pi: ExtensionAPI) {
         if (isThinkingPhase && !isAllowedWrite) {
           const escalation = await maybeEscalate("process", ctx);
           if (escalation === "block") {
-            return { blocked: true };
+            return { block: true };
           }
 
           const allowedDir = phase === "brainstorm" ? "docs/superpowers/specs/" : "docs/superpowers/plans/";
@@ -743,7 +746,7 @@ export default function (pi: ExtensionAPI) {
 
       // TDD phase
       if (tddPhase !== "IDLE") {
-        const colorMap: Record<string, string> = {
+        const colorMap: Record<string, ThemeColor> = {
           "RED-PENDING": "error",
           RED: "error",
           GREEN: "success",

@@ -9,7 +9,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_No changes yet._
+### Fixed
+
+- **Extensions aligned with pi 0.82.1 core packages and API.** Imports rewritten from the deprecated `@mariozechner/*` + `@sinclair/typebox` specifiers to the `@earendil-works/*` + `typebox` names pi 0.82.1 bundles (per `packages.md`), and 0.52.9→0.82.1 API drift a pure rename would have left broken:
+  - `session_switch`/`session_fork` events removed in 0.82.1; reconstruction now uses `session_start` (reason `new`/`resume`/`fork`) + `session_tree`, registered per-event so `pi.on`'s per-literal overloads match.
+  - `tool_call` handler returns `{ block: true }` (was `{ blocked: true }`, which pi ignores — tool blocking silently never worked).
+  - Subagent `AgentConfig.timeout` now parsed from frontmatter; the absolute kill timer no longer always falls back to the 10-minute default.
+  - Type drift: `InputEventResult` on the input `finish()` helper, dropped dead `event.input` fallback (`InputEvent.text`), `Record<TransitionBoundary, Phase>` and `Record<string, ThemeColor>` for the lookup maps.
+
+### Added
+
+- **`tsc --noEmit` typecheck gate** (`tsconfig.json`, scoped to `extensions/`) added to the `check` script and CI, so core API drift is caught going forward.
+- Regression tests for the 0.82.1 session-event contract and subagent `timeout` frontmatter parsing.
+
+### Changed
+
+- `package-lock.json` regenerated from stale `@mariozechner/*@0.52.9` / `typebox@0.34.48` to `@earendil-works/*@0.82.1` + `typebox@1.1.38` (pinned in `devDependencies` so CI typechecks against exactly what pi ships). Core packages listed in `peerDependencies` as `"*"` per pi's packaging guidance.
 
 ---
 

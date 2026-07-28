@@ -117,7 +117,7 @@ describe("branch safety monitor", () => {
     workflowMonitorExtension(fake.api as any);
 
     const onToolResult = getSingleHandler(fake.handlers, "tool_result");
-    const onSessionSwitch = getSingleHandler(fake.handlers, "session_switch");
+    const onSessionSwitch = getSingleHandler(fake.handlers, "session_start");
 
     const ctx = {
       hasUI: false,
@@ -192,8 +192,8 @@ describe("branch safety monitor", () => {
     );
 
     expect(res?.content?.[0]?.type).toBe("text");
-    expect((res?.content?.[0] as any).text).toContain("📌 Current branch: `safe-branch`");
-    expect((res?.content?.[1] as any).text).toBe("original text");
+    expect((res?.content?.[0] as any)?.text).toContain("📌 Current branch: `safe-branch`");
+    expect((res?.content?.[1] as any)?.text).toBe("original text");
     expect(res?.content?.[2]).toEqual(originalImage);
   });
 

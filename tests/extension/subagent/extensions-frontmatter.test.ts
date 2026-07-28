@@ -108,4 +108,57 @@ You are a trimmed agent.
     expect(agents).toHaveLength(1);
     expect(agents[0].extensions).toEqual(["../extensions/ext-a.ts", "../extensions/ext-b.ts"]);
   });
+
+  test("agent with numeric timeout frontmatter field populates AgentConfig.timeout", () => {
+    writeAgent(
+      tmpDir,
+      "timed-agent",
+      `---
+name: timed-agent
+description: Agent with a timeout
+timeout: 120000
+---
+You are a timed agent.
+`,
+    );
+
+    const agents = loadAgentsFromDir(tmpDir, "user");
+    expect(agents).toHaveLength(1);
+    expect(agents[0].timeout).toBe(120000);
+  });
+
+  test("agent without timeout field has undefined timeout", () => {
+    writeAgent(
+      tmpDir,
+      "no-timeout-agent",
+      `---
+name: no-timeout-agent
+description: Agent without timeout
+---
+You are an untimed agent.
+`,
+    );
+
+    const agents = loadAgentsFromDir(tmpDir, "user");
+    expect(agents).toHaveLength(1);
+    expect(agents[0].timeout).toBeUndefined();
+  });
+
+  test("agent with non-numeric timeout field has undefined timeout (ignored, not crashed)", () => {
+    writeAgent(
+      tmpDir,
+      "bad-timeout-agent",
+      `---
+name: bad-timeout-agent
+description: Agent with bad timeout
+timeout: not-a-number
+---
+You are a badly-timed agent.
+`,
+    );
+
+    const agents = loadAgentsFromDir(tmpDir, "user");
+    expect(agents).toHaveLength(1);
+    expect(agents[0].timeout).toBeUndefined();
+  });
 });

@@ -106,13 +106,13 @@ describe("practice escalation", () => {
       { toolCallId: "t1", toolName: "write", input: { path: "src/a.ts", content: "x" } },
       ctx,
     );
-    expect(res1).not.toEqual({ blocked: true });
+    expect(res1).not.toEqual({ block: true });
 
     // Second TDD violation: should also not block
     const res2 = await onToolCall(
       { toolCallId: "t2", toolName: "write", input: { path: "src/b.ts", content: "y" } },
       ctx,
     );
-    expect(res2).not.toEqual({ blocked: true });
+    expect(res2).not.toEqual({ block: true });
   });
 });
