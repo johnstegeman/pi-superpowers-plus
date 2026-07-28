@@ -202,6 +202,17 @@ The `/workflow-next` command starts a new session with artifact context:
 
 Valid phases: `brainstorm`, `plan`, `execute`, `verify`, `review`, `finish`.
 
+> **Note:** `/workflow-next` and `/workflow-reset` are deprecated in favor of the unified `/superpowers` command (subsumed by `/superpowers stage` and `/superpowers reset` respectively). They still work but will be removed in a future release.
+
+#### Commands
+
+The `/superpowers` command is the single entry point for inspecting and controlling workflow state, in-session (no new session required):
+
+- `/superpowers` — full status dashboard (workflow stage, tasks, TDD phase, debug state, verification).
+- `/superpowers tasks [list|add|remove|complete|reset|rewind]` — manipulate plan-tracker tasks directly.
+- `/superpowers stage [show|<phase>|reset]` — view or advance the workflow stage.
+- `/superpowers reset` — reset all workflow state (stage, monitors, tasks).
+
 #### Reference Tool
 
 Serves detailed guidance on demand, keeping skill files lean while making reference content available when the agent needs it:

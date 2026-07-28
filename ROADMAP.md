@@ -146,14 +146,17 @@ The "mature package" release. Fill testing gaps, address known skill blindspots,
 
 Ideas with no timeline. May become milestones, may not.
 
-### `/superpowers` command
+### `/superpowers` command — ✅ shipped (v0.6.0)
 
-**[user]** Unified user command for inspecting and controlling workflow state. Subsumes the existing `/workflow-next` command.
+**[user]** Unified user command for inspecting and controlling workflow state. Subsumes the existing `/workflow-next` and `/workflow-reset` commands (still present, marked deprecated).
 
+Shipped:
 - `/superpowers` — full status dashboard (workflow stage, tasks, TDD phase, debug state)
 - `/superpowers tasks [list|add|remove|complete|reset|rewind]` — manipulate plan-tracker tasks directly
 - `/superpowers stage [show|<phase>|reset]` — view or advance workflow stage (brainstorm → plan → execute → verify → review → finish)
 - `/superpowers reset` — reset all workflow state (stage, monitors, tasks)
+
+Still future:
 - `/superpowers query "<question>"` — explain current state and why we're here (lower priority; static explanation from audit trail, no LLM call)
 
 ### Command-driven phase advancement

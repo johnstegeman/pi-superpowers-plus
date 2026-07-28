@@ -2,30 +2,38 @@
  * Plan Tracker Extension
  *
  * A native pi tool for tracking plan progress.
- * State is stored in tool result details for proper branching support.
+ * State is stored via the shared plan-tracker-state module (durable,
+ * appendEntry-based persistence), with tool-result details kept for
+ * backward compat and per-call rendering.
  * Shows a persistent TUI widget above the editor.
  */
 
 import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
-
-type TaskStatus = "pending" | "in_progress" | "complete";
-
-interface Task {
-  name: string;
-  status: TaskStatus;
-}
+import { renderPlanTrackerWidget } from "./plan-tracker-render";
+import {
+  addTask,
+  clearTasks,
+  getTasks,
+  initTasks,
+  persistTasks,
+  reconstructTasksFromBranch,
+  removeTask,
+  rewindTask,
+  type Task,
+  updateTask,
+} from "./plan-tracker-state";
 
 interface PlanTrackerDetails {
-  action: "init" | "update" | "status" | "clear";
+  action: "init" | "update" | "status" | "clear" | "add" | "remove" | "rewind";
   tasks: Task[];
   error?: string;
 }
 
 const PlanTrackerParams = Type.Object({
-  action: StringEnum(["init", "update", "status", "clear"] as const, {
+  action: StringEnum(["init", "update", "status", "clear", "add", "remove", "rewind"] as const, {
     description: "Action to perform",
   }),
   tasks: Type.Optional(
@@ -36,7 +44,7 @@ const PlanTrackerParams = Type.Object({
   index: Type.Optional(
     Type.Integer({
       minimum: 0,
-      description: "Task index, 0-based (for update)",
+      description: "Task index, 0-based (for update/remove/rewind)",
     }),
   ),
   status: Type.Optional(
@@ -44,33 +52,10 @@ const PlanTrackerParams = Type.Object({
       description: "New status (for update)",
     }),
   ),
+  name: Type.Optional(Type.String({ description: "Task name (for add)" })),
 });
 
 export type PlanTrackerInput = Static<typeof PlanTrackerParams>;
-
-function formatWidget(tasks: Task[], theme: Theme): string {
-  if (tasks.length === 0) return "";
-
-  const complete = tasks.filter((t) => t.status === "complete").length;
-  const icons = tasks
-    .map((t) => {
-      switch (t.status) {
-        case "complete":
-          return theme.fg("success", "✓");
-        case "in_progress":
-          return theme.fg("warning", "→");
-        default:
-          return theme.fg("dim", "○");
-      }
-    })
-    .join("");
-
-  // Find current task (first in_progress, or first pending)
-  const current = tasks.find((t) => t.status === "in_progress") ?? tasks.find((t) => t.status === "pending");
-  const currentName = current ? `  ${current.name}` : "";
-
-  return `${theme.fg("muted", "Tasks:")} ${icons} ${theme.fg("muted", `(${complete}/${tasks.length})`)}${currentName}`;
-}
 
 function formatStatus(tasks: Task[]): string {
   if (tasks.length === 0) return "No plan active.";
@@ -91,28 +76,14 @@ function formatStatus(tasks: Task[]): string {
 }
 
 export default function (pi: ExtensionAPI) {
-  let tasks: Task[] = [];
-
-  const reconstructState = (ctx: ExtensionContext) => {
-    tasks = [];
-    for (const entry of ctx.sessionManager.getBranch()) {
-      if (entry.type !== "message") continue;
-      const msg = entry.message;
-      if (msg.role !== "toolResult" || msg.toolName !== "plan_tracker") continue;
-      const details = msg.details as PlanTrackerDetails | undefined;
-      if (details && !details.error) {
-        tasks = details.tasks;
-      }
-    }
-  };
-
-  const updateWidget = (ctx: ExtensionContext) => {
+  const updateWidget = (ctx: import("@mariozechner/pi-coding-agent").ExtensionContext) => {
     if (!ctx.hasUI) return;
+    const tasks = getTasks();
     if (tasks.length === 0) {
       ctx.ui.setWidget("plan_tracker", undefined);
     } else {
       ctx.ui.setWidget("plan_tracker", (_tui, theme) => {
-        return new Text(formatWidget(tasks, theme), 0, 0);
+        return new Text(renderPlanTrackerWidget(tasks, theme), 0, 0);
       });
     }
   };
@@ -120,7 +91,7 @@ export default function (pi: ExtensionAPI) {
   // Reconstruct state + widget on session events
   for (const event of ["session_start", "session_switch", "session_fork", "session_tree"] as const) {
     pi.on(event, async (_event, ctx) => {
-      reconstructState(ctx);
+      reconstructTasksFromBranch(ctx);
       updateWidget(ctx);
     });
   }
@@ -129,7 +100,7 @@ export default function (pi: ExtensionAPI) {
     name: "plan_tracker",
     label: "Plan Tracker",
     description:
-      "Track implementation plan progress. Actions: init (set task list), update (change task status), status (show current state), clear (remove plan).",
+      "Track implementation plan progress. Actions: init (set task list), update (change task status), status (show current state), clear (remove plan), add (append task), remove (delete task by index), rewind (mark task and later tasks pending).",
     parameters: PlanTrackerParams,
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -140,13 +111,15 @@ export default function (pi: ExtensionAPI) {
               content: [{ type: "text", text: "Error: tasks array required for init" }],
               details: {
                 action: "init",
-                tasks: [...tasks],
+                tasks: getTasks(),
                 error: "tasks required",
               } as PlanTrackerDetails,
             };
           }
-          tasks = params.tasks.map((name) => ({ name, status: "pending" as TaskStatus }));
+          initTasks(params.tasks);
+          persistTasks(pi);
           updateWidget(ctx);
+          const tasks = getTasks();
           return {
             content: [
               {
@@ -154,7 +127,7 @@ export default function (pi: ExtensionAPI) {
                 text: `Plan initialized with ${tasks.length} tasks.\n${formatStatus(tasks)}`,
               },
             ],
-            details: { action: "init", tasks: [...tasks] } as PlanTrackerDetails,
+            details: { action: "init", tasks } as PlanTrackerDetails,
           };
         }
 
@@ -164,38 +137,26 @@ export default function (pi: ExtensionAPI) {
               content: [{ type: "text", text: "Error: index and status required for update" }],
               details: {
                 action: "update",
-                tasks: [...tasks],
+                tasks: getTasks(),
                 error: "index and status required",
               } as PlanTrackerDetails,
             };
           }
-          if (tasks.length === 0) {
+          try {
+            updateTask(params.index, params.status);
+          } catch (err) {
             return {
-              content: [{ type: "text", text: "Error: no plan active. Use init first." }],
+              content: [{ type: "text", text: `Error: ${(err as Error).message}` }],
               details: {
                 action: "update",
-                tasks: [],
-                error: "no plan active",
+                tasks: getTasks(),
+                error: (err as Error).message,
               } as PlanTrackerDetails,
             };
           }
-          if (params.index < 0 || params.index >= tasks.length) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: index ${params.index} out of range (0-${tasks.length - 1})`,
-                },
-              ],
-              details: {
-                action: "update",
-                tasks: [...tasks],
-                error: `index ${params.index} out of range`,
-              } as PlanTrackerDetails,
-            };
-          }
-          tasks[params.index].status = params.status;
+          persistTasks(pi);
           updateWidget(ctx);
+          const tasks = getTasks();
           return {
             content: [
               {
@@ -203,20 +164,123 @@ export default function (pi: ExtensionAPI) {
                 text: `Task ${params.index} "${tasks[params.index].name}" → ${params.status}\n${formatStatus(tasks)}`,
               },
             ],
-            details: { action: "update", tasks: [...tasks] } as PlanTrackerDetails,
+            details: { action: "update", tasks } as PlanTrackerDetails,
+          };
+        }
+
+        case "add": {
+          if (!params.name || !params.name.trim()) {
+            return {
+              content: [{ type: "text", text: "Error: name required for add" }],
+              details: {
+                action: "add",
+                tasks: getTasks(),
+                error: "name required",
+              } as PlanTrackerDetails,
+            };
+          }
+          try {
+            addTask(params.name);
+          } catch (err) {
+            return {
+              content: [{ type: "text", text: `Error: ${(err as Error).message}` }],
+              details: {
+                action: "add",
+                tasks: getTasks(),
+                error: (err as Error).message,
+              } as PlanTrackerDetails,
+            };
+          }
+          persistTasks(pi);
+          updateWidget(ctx);
+          const tasks = getTasks();
+          return {
+            content: [{ type: "text", text: `Task "${params.name}" added.\n${formatStatus(tasks)}` }],
+            details: { action: "add", tasks } as PlanTrackerDetails,
+          };
+        }
+
+        case "remove": {
+          if (params.index === undefined) {
+            return {
+              content: [{ type: "text", text: "Error: index required for remove" }],
+              details: {
+                action: "remove",
+                tasks: getTasks(),
+                error: "index required",
+              } as PlanTrackerDetails,
+            };
+          }
+          const removedName = getTasks()[params.index]?.name;
+          try {
+            removeTask(params.index);
+          } catch (err) {
+            return {
+              content: [{ type: "text", text: `Error: ${(err as Error).message}` }],
+              details: {
+                action: "remove",
+                tasks: getTasks(),
+                error: (err as Error).message,
+              } as PlanTrackerDetails,
+            };
+          }
+          persistTasks(pi);
+          updateWidget(ctx);
+          const tasks = getTasks();
+          return {
+            content: [{ type: "text", text: `Task "${removedName}" removed.\n${formatStatus(tasks)}` }],
+            details: { action: "remove", tasks } as PlanTrackerDetails,
+          };
+        }
+
+        case "rewind": {
+          if (params.index === undefined) {
+            return {
+              content: [{ type: "text", text: "Error: index required for rewind" }],
+              details: {
+                action: "rewind",
+                tasks: getTasks(),
+                error: "index required",
+              } as PlanTrackerDetails,
+            };
+          }
+          try {
+            rewindTask(params.index);
+          } catch (err) {
+            return {
+              content: [{ type: "text", text: `Error: ${(err as Error).message}` }],
+              details: {
+                action: "rewind",
+                tasks: getTasks(),
+                error: (err as Error).message,
+              } as PlanTrackerDetails,
+            };
+          }
+          persistTasks(pi);
+          updateWidget(ctx);
+          const tasks = getTasks();
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Rewound to task ${params.index}.\n${formatStatus(tasks)}`,
+              },
+            ],
+            details: { action: "rewind", tasks } as PlanTrackerDetails,
           };
         }
 
         case "status": {
           return {
-            content: [{ type: "text", text: formatStatus(tasks) }],
-            details: { action: "status", tasks: [...tasks] } as PlanTrackerDetails,
+            content: [{ type: "text", text: formatStatus(getTasks()) }],
+            details: { action: "status", tasks: getTasks() } as PlanTrackerDetails,
           };
         }
 
         case "clear": {
-          const count = tasks.length;
-          tasks = [];
+          const count = getTasks().length;
+          clearTasks();
+          persistTasks(pi);
           updateWidget(ctx);
           return {
             content: [
@@ -234,7 +298,7 @@ export default function (pi: ExtensionAPI) {
             content: [{ type: "text", text: `Unknown action: ${params.action}` }],
             details: {
               action: "status",
-              tasks: [...tasks],
+              tasks: getTasks(),
               error: `unknown action`,
             } as PlanTrackerDetails,
           };
@@ -250,6 +314,12 @@ export default function (pi: ExtensionAPI) {
       }
       if (args.action === "init" && args.tasks) {
         text += ` ${theme.fg("dim", `(${args.tasks.length} tasks)`)}`;
+      }
+      if ((args.action === "remove" || args.action === "rewind") && args.index !== undefined) {
+        text += ` ${theme.fg("accent", `[${args.index}]`)}`;
+      }
+      if (args.action === "add" && args.name) {
+        text += ` ${theme.fg("dim", args.name)}`;
       }
       return new Text(text, 0, 0);
     },
@@ -281,6 +351,16 @@ export default function (pi: ExtensionAPI) {
             0,
           );
         }
+        case "add":
+          return new Text(theme.fg("success", "✓ ") + theme.fg("muted", `Task added (${taskList.length} total)`), 0, 0);
+        case "remove":
+          return new Text(
+            theme.fg("success", "✓ ") + theme.fg("muted", `Task removed (${taskList.length} remaining)`),
+            0,
+            0,
+          );
+        case "rewind":
+          return new Text(theme.fg("success", "✓ ") + theme.fg("muted", "Plan rewound"), 0, 0);
         case "status": {
           if (taskList.length === 0) {
             return new Text(theme.fg("dim", "No plan active"), 0, 0);
