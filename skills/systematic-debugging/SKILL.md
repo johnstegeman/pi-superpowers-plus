@@ -13,10 +13,6 @@ description: Use when encountering any bug, test failure, or unexpected behavior
 
 **Violating the letter of this process is violating the spirit of debugging.**
 
-> The workflow-monitor extension tracks your debugging: it detects fix-without-investigation and counts failed fix attempts, surfacing warnings in tool results. Use `workflow_reference` with debug topics for additional guidance.
-
-If a tool result contains a ⚠️ workflow warning, stop immediately and address it before continuing.
-
 ## The Iron Law
 
 ```
@@ -164,5 +160,4 @@ These techniques are part of systematic debugging and available in this director
 - **`root-cause-tracing.md`** — Trace bugs backward through call stack to find original trigger
 - **`defense-in-depth.md`** — Add validation at multiple layers after finding root cause
 - **`condition-based-waiting.md`** — Replace arbitrary timeouts with condition polling
-
-Use `workflow_reference` for: `debug-rationalizations`, `debug-tracing`, `debug-defense-in-depth`, `debug-condition-waiting`
+- **`reference/rationalizations.md`** — Why investigation-first matters, common excuses

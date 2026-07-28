@@ -28,7 +28,6 @@
   "pi": {
     "extensions": [
       "extensions/plan-tracker.ts",
-      "extensions/workflow-monitor.ts",
       "extensions/subagent/index.ts"
     ],
     "skills": [
