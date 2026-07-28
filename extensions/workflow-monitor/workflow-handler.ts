@@ -36,7 +36,6 @@ export type SuperpowersStatePatch = {
   workflow?: Partial<WorkflowTrackerState> & {
     phases?: Partial<Record<Phase, PhaseStatus>>;
     artifacts?: Partial<Record<Phase, string | null>>;
-    prompted?: Partial<Record<Phase, boolean>>;
   };
   tdd?: Partial<SuperpowersStateSnapshot["tdd"]>;
   debug?: Partial<SuperpowersStateSnapshot["debug"]>;
@@ -81,7 +80,6 @@ export interface WorkflowHandler {
   getFullState(): SuperpowersStateSnapshot;
   setFullState(snapshot: SuperpowersStatePatch): void;
   restoreWorkflowStateFromBranch(branch: SessionEntry[]): void;
-  markWorkflowPrompted(phase: Phase): boolean;
   completeCurrentWorkflowPhase(): boolean;
   advanceWorkflowTo(phase: Phase): boolean;
   skipWorkflowPhases(phases: Phase[]): boolean;
@@ -250,7 +248,6 @@ export function createWorkflowHandler(): WorkflowHandler {
           ...snapshot.workflow,
           phases: { ...defaultWorkflow.phases, ...snapshot.workflow.phases },
           artifacts: { ...defaultWorkflow.artifacts, ...snapshot.workflow.artifacts },
-          prompted: { ...defaultWorkflow.prompted, ...snapshot.workflow.prompted },
         });
       }
       if (snapshot.tdd) {
@@ -271,10 +268,6 @@ export function createWorkflowHandler(): WorkflowHandler {
       if (state) {
         tracker.setState(state);
       }
-    },
-
-    markWorkflowPrompted(phase: Phase) {
-      return tracker.markPrompted(phase);
     },
 
     completeCurrentWorkflowPhase() {

@@ -69,7 +69,6 @@ describe("WorkflowTracker", () => {
   test("advanceTo backward triggers full reset and activates the target phase", () => {
     tracker.advanceTo("plan");
     tracker.recordArtifact("plan", "docs/superpowers/plans/foo.md");
-    tracker.markPrompted("plan");
 
     const result = tracker.advanceTo("brainstorm");
 
@@ -80,7 +79,6 @@ describe("WorkflowTracker", () => {
     // plan should be wiped by the reset
     expect(s.phases.plan).toBe("pending");
     expect(s.artifacts.plan).toBeNull();
-    expect(s.prompted.plan).toBe(false);
   });
 
   test("advanceTo same phase triggers full reset and reactivates that phase", () => {
@@ -112,7 +110,6 @@ describe("WorkflowTracker", () => {
   test("reset() restores tracker to empty state regardless of prior state", () => {
     tracker.advanceTo("execute");
     tracker.recordArtifact("plan", "docs/superpowers/plans/2026-02-20-foo.md");
-    tracker.markPrompted("brainstorm");
 
     tracker.reset();
 
@@ -120,7 +117,6 @@ describe("WorkflowTracker", () => {
     expect(s.currentPhase).toBeNull();
     for (const p of WORKFLOW_PHASES) expect(s.phases[p]).toBe("pending");
     for (const p of WORKFLOW_PHASES) expect(s.artifacts[p]).toBeNull();
-    for (const p of WORKFLOW_PHASES) expect(s.prompted[p]).toBe(false);
   });
 });
 
