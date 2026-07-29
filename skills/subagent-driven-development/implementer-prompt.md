@@ -4,7 +4,7 @@ Use this template when dispatching an implementer subagent.
 
 ```
 Dispatch a subagent with this prompt:
-  subagent({ agent: "implementer", task: `
+  Agent({ subagent_type: "implementer", prompt: `
     You are implementing Task N: [task name]
 
     ## Task Description
@@ -136,7 +136,7 @@ Dispatch a subagent with this prompt:
     Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
     Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need
     information that wasn't provided. Never silently produce work you're unsure about.
-  ` })
+  `, description: "Implement task N" })
 ```
 
 **Placeholders:**
