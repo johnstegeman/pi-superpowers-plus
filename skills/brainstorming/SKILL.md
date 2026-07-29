@@ -125,7 +125,7 @@ digraph brainstorming {
 - Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
   - (User preferences for spec location override this default)
 - Commit the design document to git
-- Mark the brainstorm phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase
+- Mark the brainstorm phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer)
 
 **Spec Self-Review:**
 After writing the spec document, look at it with fresh eyes:

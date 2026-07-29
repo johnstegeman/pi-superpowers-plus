@@ -252,4 +252,4 @@ Trivial change → relevant tests run after (Scenario 3)
 
 No exceptions without your human partner's permission.
 
-When the TDD implementation cycle is complete (all tests green, code committed), mark the implement phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase.
+When the TDD implementation cycle is complete (all tests green, code committed), mark the implement phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer).
