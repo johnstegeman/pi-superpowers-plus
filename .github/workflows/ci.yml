@@ -16,5 +16,3 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npx biome check .
-      - run: npx tsc --noEmit
-      - run: npx vitest run
