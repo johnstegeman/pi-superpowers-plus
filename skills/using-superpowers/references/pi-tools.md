@@ -1,16 +1,17 @@
-# Pi Tool Mapping
+# Pi Tool Prerequisites
 
-Skills speak in actions ("dispatch a subagent", "create a todo", "read a file"). On Pi these resolve to the tools below.
+Skills speak in actions ("dispatch a subagent", "create a task", "read a file"). On Pi these resolve to tools provided by two companion packages — **installed separately**, not bundled with this package.
 
-| Action skills request | Pi equivalent |
-| --- | --- |
-| Dispatch a subagent (`subagent({ agent, task })` form) | Use the `subagent` tool (bundled with this package) — single, parallel, and chain modes |
-| Task tracking ("create a todo", "mark complete") | Use the `plan_tracker` tool (bundled with this package) — init/update/status/clear actions |
+## Required packages
 
-## Subagents
+```bash
+pi install npm:@tintinweb/pi-subagents
+pi install npm:@tintinweb/pi-tasks
+```
 
-This package registers a `subagent` tool that spawns a separate `pi` process per invocation with an isolated context window. It supports single-agent, parallel, and chain dispatch. Use it to delegate implementation and review work to specialized agents (see the agent definitions in `agents/`).
+| Action skills request | Package | Tool |
+| --- | --- | --- |
+| Dispatch a subagent (`Agent({ subagent_type, prompt, description, ... })`) | [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) | `Agent`, `get_subagent_result`, `steer_subagent` |
+| Task tracking (`TaskCreate`, `TaskUpdate`, `TaskList`, ...) | [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) | `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`, `TaskOutput`, `TaskStop`, `TaskExecute` |
 
-## Task lists
-
-This package registers a `plan_tracker` tool for task progress: `init` (set task list), `update` (change task status), `status` (show current state), and `clear` (remove plan). Use it for the per-task todos described in skills. For lightweight tracking outside a formal plan, a repo-local `TODO.md` also works.
+There is **no fallback** if these packages aren't installed — skills reference the tools directly. For each tool's full parameter schema, see the package's own README (linked above); skills show the concrete call shapes you'll use day to day.
