@@ -203,6 +203,60 @@ describe("subagent/index error handling", () => {
     process.env.PI_SUBAGENT_CONCURRENCY = originalConcurrency;
   });
 
+  test("does not kill subagent for tool activity spanning longer than the inactivity timeout", async () => {
+    vi.useFakeTimers();
+
+    const proc = createFakeProcess();
+    spawnMock.mockReturnValue(proc);
+
+    const tool = registerTool();
+    const resultPromise = tool.execute("id", { agent: "test-agent", task: "do work" }, undefined, undefined, {
+      cwd: process.cwd(),
+      hasUI: false,
+    });
+
+    // Assistant kicks off a tool call.
+    proc.stdout.emit(
+      "data",
+      Buffer.from(`${JSON.stringify({ type: "tool_execution_start", toolCallId: "1", toolName: "bash", args: {} })}\n`),
+    );
+
+    // Long-running tool: stream progress updates every 90s, well past a single
+    // INACTIVITY_TIMEOUT_MS (120s) window, but each update should reset the timer.
+    for (let i = 0; i < 3; i++) {
+      await vi.advanceTimersByTimeAsync(90_000);
+      proc.stdout.emit(
+        "data",
+        Buffer.from(
+          `${JSON.stringify({ type: "tool_execution_update", toolCallId: "1", toolName: "bash", partialResult: {} })}\n`,
+        ),
+      );
+    }
+
+    // Total elapsed time (270s) far exceeds INACTIVITY_TIMEOUT_MS (120s), but the
+    // subagent was never silent for a full 120s window, so it must not be killed.
+    expect(proc.kill).not.toHaveBeenCalled();
+
+    proc.stdout.emit(
+      "data",
+      Buffer.from(
+        `${JSON.stringify({ type: "tool_execution_end", toolCallId: "1", toolName: "bash", result: {}, isError: false })}\n`,
+      ),
+    );
+    proc.stdout.emit(
+      "data",
+      Buffer.from(`${JSON.stringify({ type: "message_end", message: { role: "assistant", content: [] } })}\n`),
+    );
+    proc.emit("exit", 0);
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    const result = await resultPromise;
+    expect(proc.kill).not.toHaveBeenCalled();
+    expect(result.content[0].text).not.toContain("inactivity");
+
+    vi.useRealTimers();
+  });
+
   test("kills subagent after absolute timeout", async () => {
     vi.useFakeTimers();
     // Set absolute timeout shorter than inactivity timeout (120s)

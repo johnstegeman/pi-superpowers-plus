@@ -418,9 +418,12 @@ async function runSingleAgent(
           resetInactivityTimer();
         }
 
-        if (event.type === "tool_result_end" && event.message) {
-          currentResult.messages.push(event.message as Message);
-          emitUpdate();
+        if (event.type === "tool_execution_start" || event.type === "tool_execution_update") {
+          // A tool is actively running/streaming — the subagent is making progress
+          // even though no message_end has fired yet, so the inactivity clock must
+          // not expire underneath a long-running tool call (e.g. a slow bash command
+          // or a nested subagent review).
+          resetInactivityTimer();
         }
       };
 
