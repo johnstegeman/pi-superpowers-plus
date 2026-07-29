@@ -70,13 +70,15 @@ Each agent gets:
 Issue all three subagent dispatches in the same response — they run in parallel:
 
 ```text
-subagent({ agent: "worker", task: "Fix agent-tool-abort.test.ts failures" })
-subagent({ agent: "worker", task: "Fix batch-completion-behavior.test.ts failures" })
-subagent({ agent: "worker", task: "Fix tool-approval-race-conditions.test.ts failures" })
+Agent({ subagent_type: "worker", prompt: "Fix agent-tool-abort.test.ts failures", description: "Fix abort tests" })
+Agent({ subagent_type: "worker", prompt: "Fix batch-completion-behavior.test.ts failures", description: "Fix batch tests" })
+Agent({ subagent_type: "worker", prompt: "Fix tool-approval-race-conditions.test.ts failures", description: "Fix race tests" })
 # All three run concurrently.
 ```
 
 Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+
+For long-running independent work where you want to keep working while agents run, add `run_in_background: true` to each `Agent(...)` call. You'll be notified on completion and can retrieve results with `get_subagent_result({ agent_id: ..., wait: true })`.
 
 ### 4. Review and Integrate
 

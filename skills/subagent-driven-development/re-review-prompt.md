@@ -9,7 +9,7 @@ that the fix itself broke nothing.
 
 ```
 Dispatch a subagent with this prompt:
-  subagent({ agent: "code-reviewer", task: `
+  Agent({ subagent_type: "code-reviewer", prompt: `
     You are re-reviewing one task's fix round. A previous review produced
     findings; an implementer has attempted to fix them. Your job is to
     verdict each finding and inspect the fix diff — nothing else.
@@ -86,7 +86,7 @@ Dispatch a subagent with this prompt:
 
     **Fix round:** [All findings addressed, no new Critical/Important
     breakage | Findings remain open] — list the open ones.
-  ` })
+  `, description: "Re-review task N fix" })
 ```
 
 **Placeholders:**

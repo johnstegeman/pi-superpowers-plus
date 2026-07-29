@@ -6,10 +6,9 @@
     "pi-package"
   ],
   "scripts": {
-    "test": "vitest run",
+    "test": "biome check .",
     "lint": "biome check .",
-    "check": "biome check . && tsc --noEmit && vitest run",
-    "check:types": "tsc --noEmit"
+    "check": "biome check ."
   },
   "license": "MIT",
   "author": "coctostan",
@@ -18,37 +17,18 @@
     "url": "https://github.com/coctostan/pi-superpowers-plus.git"
   },
   "files": [
-    "extensions/",
-    "agents/",
+    "agent-templates/",
     "skills/",
-    "banner.jpg",
+    "banner-plus.jpg",
     "LICENSE",
     "README.md"
   ],
   "pi": {
-    "extensions": [
-      "extensions/plan-tracker.ts",
-      "extensions/subagent/index.ts"
-    ],
     "skills": [
       "skills"
     ]
   },
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-agent-core": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
-    "typebox": "*"
-  },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.15",
-    "@earendil-works/pi-ai": "0.82.1",
-    "@earendil-works/pi-agent-core": "0.82.1",
-    "@earendil-works/pi-coding-agent": "0.82.1",
-    "@earendil-works/pi-tui": "0.82.1",
-    "typebox": "1.1.38",
-    "typescript": "^5.9.0",
-    "vitest": "^4.0.18"
+    "@biomejs/biome": "^2.3.15"
   }
 }

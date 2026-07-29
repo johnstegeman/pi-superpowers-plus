@@ -130,4 +130,4 @@ Skip any step = lying, not verifying
 
 Before running `git commit`, `git push`, or `gh pr create`, check for yourself: has a passing test suite run since your last source file edit? If not, run it first — don't rely on tooling to catch this for you.
 
-When all verification passes, mark the verify phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase.
+When all verification passes, mark the verify phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer).
