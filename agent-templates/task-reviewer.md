@@ -1,5 +1,4 @@
 ---
-name: task-reviewer
 description: "Review one task: spec compliance + code quality (read-only)"
 tools: read, bash, find, grep, ls
 ---
