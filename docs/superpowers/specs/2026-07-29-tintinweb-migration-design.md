@@ -80,8 +80,10 @@ of the same overall change, not deferred, since a partial swap would leave
 skills referencing removed tools. Rollout is staged across 3 PRs for
 reviewability:
 
-1. Remove old extensions/tests, add `agent-templates/`, update README
-   prerequisites.
+1. Remove old extensions/tests, add `agent-templates/`, and do the **full**
+   README rewrite (all bullets under "README rewrite" below) — none of it
+   depends on the skill files being rewritten first, since it's describing
+   tool call syntax and architecture, not the skill prose itself.
 2. Rewrite dispatch-related skills (`subagent-driven-development`,
    `dispatching-parallel-agents`, `requesting-code-review`).
 3. Rewrite tracking-related skills (the 5 phase-completion `plan_tracker`
