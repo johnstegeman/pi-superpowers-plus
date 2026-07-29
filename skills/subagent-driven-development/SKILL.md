@@ -151,7 +151,11 @@ a ledger file, not only in todos.
   that happens, recover from `git log`.
 
 Read the plan once, note its context and Global Constraints, and create a
-todo per task via the `plan_tracker` tool.
+task per plan task via `TaskCreate({ subject: "Task N: <name>", description:
+"<one-line summary>" })` — one `TaskCreate` call per task. Note each returned
+task ID; you'll pass it to `TaskUpdate` when the task is complete. If the
+plan states tasks depend on each other, wire those with `addBlockedBy` on the
+dependent task's `TaskUpdate` (or `addBlocks` on the prerequisite).
 
 Before dispatching Task 1, scan the plan once for conflicts:
 
@@ -360,7 +364,8 @@ message as your other bookkeeping:
 - `Task <N>: complete (commits <base7>..<head7>, <K> parked)` after a
   tripped breaker
 
-Then mark the todo complete via the `plan_tracker` tool and move on. Never
+Then mark the task complete via `TaskUpdate({ taskId: <id>, status:
+"completed" })` and move on. Never
 move to the next task while the review has open Critical/Important issues
 that are neither fixed nor parked-with-ruling at the cap.
 
