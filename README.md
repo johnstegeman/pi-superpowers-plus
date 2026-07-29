@@ -4,17 +4,28 @@
 
 Structured workflow skills for [pi](https://github.com/badlogic/pi-mono).
 
-Your coding agent doesn't just know the rules - it follows them. Skills teach the agent *what* to do (brainstorm before building, write tests before code, verify before claiming done), and a couple of small extensions support that workflow with tooling (task tracking, subagent dispatch).
+Your coding agent doesn't just know the rules - it follows them. Skills teach the agent *what* to do (brainstorm before building, write tests before code, verify before claiming done). The tooling that supports that workflow — subagent dispatch and task tracking — comes from two companion packages you install alongside this one.
 
 ## What You Get When You Install This
 
 **13 workflow skills** that guide the agent through a structured development process - from brainstorming ideas through shipping code.
 
-**2 extensions** that run silently in the background:
-- **Plan Tracker** — tracks task progress with a TUI widget (`plan_tracker` tool).
-- **Subagent** — registers a `subagent` tool for dispatching implementation and review work to isolated subprocess agents, with bundled agent definitions and structured results.
+**Two companion packages** provide the tooling the skills reference (installed separately, see Prerequisites):
+- [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) — registers the `Agent` / `get_subagent_result` / `steer_subagent` tools for dispatching implementation and review work to isolated in-process subagents, with a persistent widget, FleetView, mid-run steering, and session resume.
+- [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) — registers the `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` / `TaskOutput` / `TaskStop` / `TaskExecute` tools for dependency-graph task tracking with a persistent widget.
 
 There's no runtime enforcement layer watching tool calls — the discipline (TDD, verification before claiming done, branch safety, etc.) lives entirely in the skill instructions the agent reads and follows.
+
+## Prerequisites
+
+This package provides skills and agent templates only — it no longer bundles its own tools. Install the two companion packages first:
+
+```bash
+pi install npm:@tintinweb/pi-subagents
+pi install npm:@tintinweb/pi-tasks
+```
+
+The skills reference `Agent(...)`, `TaskCreate(...)`, `TaskUpdate(...)`, etc. directly. There is **no fallback** if these packages aren't installed — the skills assume the tools are available.
 
 ## Install
 
@@ -22,7 +33,19 @@ There's no runtime enforcement layer watching tool calls — the discipline (TDD
 pi install git:github.com/johnstegeman/pi-superpowers-plus
 ```
 
-No configuration required. Skills and extensions activate automatically.
+Then copy the agent templates into a location `pi-subagents` discovers (see its [Custom Agents](https://github.com/tintinweb/pi-subagents#custom-agents) docs):
+
+```bash
+# Global (available everywhere) — pick this or the project-local option:
+cp agent-templates/*.md ~/.pi/agent/agents/
+
+# Or project-local (this project only):
+mkdir -p .pi/agents && cp agent-templates/*.md .pi/agents/
+```
+
+The templates are copy-in only — they are never auto-loaded from this package's directory and never overwritten by an update. Re-copy after upgrading if you want the upstream changes, or keep your local edits.
+
+No other configuration required. Skills activate automatically.
 
 ## Support
 
@@ -34,36 +57,36 @@ No configuration required. Skills and extensions activate automatically.
 
 ## Upgrading from `pi-superpowers`
 
-If you're currently using [`pi-superpowers`](https://github.com/coctostan/pi-superpowers), `pi-superpowers-plus` is intended as a drop-in upgrade: you keep the same skill names and workflow, with a few pi-specific tools layered on top.
+If you're currently using [`pi-superpowers`](https://github.com/coctostan/pi-superpowers), `pi-superpowers-plus` is intended as a drop-in upgrade: you keep the same skill names and workflow, with pi-specific tooling layered on top.
 
 ### What stays the same
 - The same core workflow skills (e.g. `/skill:brainstorming`, `/skill:writing-plans`, `/skill:executing-plans`, etc.)
 - The same "structured workflow" idea and phase order
 
 ### What's new in `pi-superpowers-plus`
-- **Three-scenario TDD model** — new feature (full TDD), modifying tested code (run existing tests), trivial change (judgment) — applied consistently across skills, agent profiles, and plan templates
-- **Subagent dispatch** (`subagent` tool) for delegating implementation/review work to isolated subprocess agents
-- **Plan Tracker tool** (`plan_tracker`) for task lists + TUI progress
+- **Three-scenario TDD model** — new feature (full TDD), modifying tested code (run existing tests), trivial change (judgment) — applied consistently across skills, agent templates, and plan templates
+- **Subagent dispatch** via [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) (`Agent` tool) for delegating implementation/review work to isolated in-process subagents
+- **Task tracking** via [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) (`TaskCreate`/`TaskUpdate`/`TaskList` tools) with a dependency graph and TUI widget
 - Restored inline red flags, rationalizations, and verification checklists in several skills for more self-contained guidance
 
 ### Migration
-Replace `pi-superpowers` with `pi-superpowers-plus` in your config:
+Replace `pi-superpowers` with `pi-superpowers-plus` in your config, and install the two companion packages (see Prerequisites):
 
 ```json
 {
-  "packages": ["npm:pi-superpowers-plus"]
+  "packages": ["npm:pi-superpowers-plus", "npm:@tintinweb/pi-subagents", "npm:@tintinweb/pi-tasks"]
 }
 ```
 
 Notes:
-- If you keep both packages enabled, you may get duplicate/competing skill guidance.
+- If you keep both `pi-superpowers` and `pi-superpowers-plus` enabled, you may get duplicate/competing skill guidance.
 
 ### How the skills differ (leveraging pi)
 
-`pi-superpowers-plus` uses a couple of pi's runtime capabilities alongside skill content:
-- **Three-scenario TDD** — skills, agent profiles, and plan templates all use the same model: new feature (full TDD), modifying tested code (run existing tests), trivial change (use judgment).
-- The **TUI** shows plan-tracker task progress as a widget.
-- Tools like **`plan_tracker`** store execution state outside the prompt.
+`pi-superpowers-plus` uses pi's runtime capabilities alongside skill content:
+- **Three-scenario TDD** — skills, agent templates, and plan templates all use the same model: new feature (full TDD), modifying tested code (run existing tests), trivial change (use judgment).
+- The **TUI widgets** from `pi-tasks` and `pi-subagents` show task progress and active agents above the editor.
+- Tools like **`TaskCreate`/`TaskUpdate`** and **`Agent`** store execution state and run subagents outside the prompt.
 - Reference material that used to bloat a skill's `SKILL.md` was split into separate reference files in the skill's own directory (e.g. `reference/rationalizations.md`), which the agent reads on demand instead of loading everything up front.
 
 To make this concrete, here's the size of each skill's `SKILL.md` compared to the original [`coctostan/pi-superpowers`](https://github.com/coctostan/pi-superpowers) (approximate KB, at time of writing). Across the shared skills, total `SKILL.md` content went from **67.5KB → 66.5KB**. Skills that shrank moved content into separate reference files loaded on demand; skills that grew restored inline red flags, rationalizations, and verification checklists for self-contained guidance.
@@ -100,7 +123,7 @@ Brainstorm → Plan → Execute → Verify → Review → Finish
 | **Review** | `/skill:requesting-code-review` | Dispatches a reviewer subagent to catch issues before merge |
 | **Finish** | `/skill:finishing-a-development-branch` | Presents merge/PR/keep/discard options and cleans up |
 
-Progress through the workflow is tracked with the `plan_tracker` tool (see below) as the agent works through each phase's checklist; there's no separate phase-tracking widget.
+Progress through the workflow is tracked with the `TaskCreate`/`TaskUpdate` tools from `@tintinweb/pi-tasks` as the agent works through each phase's checklist; the `pi-tasks` widget renders the task list above the editor.
 
 ### Supporting Skills
 
@@ -114,23 +137,6 @@ These skills are used within the main workflow as needed:
 | `/skill:dispatching-parallel-agents` | When multiple independent problems need solving concurrently |
 | `/skill:receiving-code-review` | When acting on review feedback - prevents blind agreement |
 
-## Extensions
-
-### Plan Tracker
-
-The `plan_tracker` tool stores task state in the session and shows progress in the TUI:
-
-```
-Tasks: ✓✓→○○ (2/5)  Task 3: Recovery modes
-```
-
-```
-plan_tracker({ action: "init", tasks: ["Task 1: Setup", "Task 2: Core", ...] })
-plan_tracker({ action: "update", index: 0, status: "complete" })
-plan_tracker({ action: "status" })
-plan_tracker({ action: "clear" })
-```
-
 ## How the Skills Work Together
 
 Skills are markdown files the agent reads to learn *what* to do; discipline (TDD, investigating before fixing, verifying before claiming done) is entirely self-enforced by following the skill instructions — there's no runtime monitor watching for violations.
@@ -141,67 +147,62 @@ Skills are markdown files the agent reads to learn *what* to do; discipline (TDD
 | Investigate before fixing | `systematic-debugging` |
 | Run tests before claiming done | `verification-before-completion` |
 | Follow workflow phases | All skills cross-reference each other |
-| Dispatch implementation work | `subagent-driven-development` (uses the `subagent` tool) |
-| Review before merge | `requesting-code-review` (dispatches a code-reviewer agent) |
+| Dispatch implementation work | `subagent-driven-development` (uses the `Agent` tool from `@tintinweb/pi-subagents`) |
+| Review before merge | `requesting-code-review` (dispatches a `code-reviewer` agent) |
 
 ## Subagent Dispatch
 
-A bundled `subagent` tool lets the orchestrating agent spawn isolated subprocess agents for implementation and review tasks. No external dependencies required.
+Subagent dispatch is provided by [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents), which runs subagents **in-process** via the pi SDK — no subprocess, no stdout parsing, no hand-rolled inactivity watchdog. Install it (see Prerequisites) and the `Agent`, `get_subagent_result`, and `steer_subagent` tools become available.
 
-### Bundled Agents
+### Agent Templates
 
-| Agent | Purpose | Tools | Extensions |
-|-------|---------|-------|------------|
-| `implementer` | Strict TDD implementation | read, write, edit, bash, lsp | — |
-| `worker` | General-purpose task execution | read, write, edit, bash, lsp | — |
-| `code-reviewer` | Production readiness review | read, bash (read-only) | — |
-| `task-reviewer` | Task review: spec compliance + code quality | read, bash (read-only) | — |
+This package ships 4 agent templates (copy-in only — see Install):
 
-Agent definitions live in `agents/*.md` and use YAML frontmatter to declare tools, model, extensions, and a system prompt body.
+| Agent | Purpose | Tools |
+|-------|---------|-------|
+| `implementer` | Strict TDD implementation | read, write, edit, bash |
+| `worker` | General-purpose task execution | read, write, edit, bash |
+| `code-reviewer` | Production readiness review (read-only) | read, bash, find, grep, ls |
+| `task-reviewer` | Task review: spec compliance + code quality (read-only) | read, bash, find, grep, ls |
+
+Templates live in `agent-templates/*.md` and use YAML frontmatter (per the `pi-subagents` schema) to declare tools and a system prompt body. Copy them into `.pi/agents/` (project) or `~/.pi/agent/agents/` (global) so `pi-subagents` discovers them.
 
 ### Single Agent
 
 ```ts
-subagent({ agent: "implementer", task: "Implement the retry logic per docs/superpowers/plans/retry-plan.md Task 3" })
+Agent({
+  subagent_type: "implementer",
+  prompt: "Implement the retry logic per docs/superpowers/plans/retry-plan.md Task 3",
+  description: "Implement retry logic",
+})
 ```
 
 ### Parallel Tasks
 
+Dispatch multiple `Agent` calls in the same response — pi runs sibling tool calls concurrently:
+
 ```ts
-subagent({
-  tasks: [
-    { agent: "worker", task: "Fix failing test in auth.test.ts" },
-    { agent: "worker", task: "Fix failing test in cache.test.ts" },
-  ],
-})
+Agent({ subagent_type: "worker", prompt: "Fix failing test in auth.test.ts", description: "Fix auth tests" })
+Agent({ subagent_type: "worker", prompt: "Fix failing test in cache.test.ts", description: "Fix cache tests" })
 ```
 
-### Structured Results
+For long-running independent work where you want to keep working while agents run, add `run_in_background: true` to each call — you'll be notified on completion and can retrieve results with `get_subagent_result`.
 
-Single-agent results include:
-- `filesChanged` — list of files written/edited
-- `testsRan` — whether any test commands were executed
-- `status` — `"completed"` or `"failed"`
+### Resuming an Agent
+
+Round 1-3 of a fix loop resume the original implementer's session:
+
+```ts
+Agent({ subagent_type: "implementer", resume: "<agent_id>", prompt: "<findings>" })
+```
 
 ### Custom Agents
 
-Add `.md` files to an `agents/` directory at your project root. They override bundled agents of the same name. Frontmatter fields:
-
-```yaml
----
-name: my-agent
-description: What this agent does
-tools: read, write, edit, bash
-model: claude-sonnet-4-5
-extensions: ../extensions/my-guard.ts
----
-
-System prompt body here.
-```
+Add `.md` files to `.pi/agents/` (project) or `~/.pi/agent/agents/` (global). `pi-subagents` discovers them automatically (see its [Custom Agents](https://github.com/tintinweb/pi-subagents#custom-agents) docs for the full frontmatter schema). The filename becomes the agent type name.
 
 ## Compared to Superpowers
 
-Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, ported to pi as [pi-superpowers](https://github.com/coctostan/pi-superpowers), then extended with a few pi-specific tools.
+Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, ported to pi as [pi-superpowers](https://github.com/coctostan/pi-superpowers), then extended with pi-specific tooling.
 
 | | [Superpowers](https://github.com/obra/superpowers) | [pi-superpowers](https://github.com/coctostan/pi-superpowers) | **pi-superpowers-plus** |
 |---|---|---|---|
@@ -209,29 +210,20 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, po
 | **Skills** | 13 workflow skills | Same 13 skills (pi port) | Same 13 skills (three-scenario TDD, restored inline guidance) |
 | **TDD discipline** | Skill tells agent the rules | Skill tells agent the rules | Skill tells agent the rules (three-scenario model) |
 | **Debug discipline** | Manual discipline | Manual discipline | Manual discipline |
-| **Subagent dispatch** | — | — | Bundled `subagent` tool + 4 agent definitions |
-| **TDD in subagents** | — | — | Three-scenario TDD instructions in agent profiles + prompt templates |
-| **Structured results** | — | — | filesChanged, testsRan per agent |
+| **Subagent dispatch** | — | — | `@tintinweb/pi-subagents` (`Agent` tool) + 4 agent templates |
+| **TDD in subagents** | — | — | Three-scenario TDD instructions in agent templates + prompt templates |
+| **Task tracking** | — | — | `@tintinweb/pi-tasks` (`TaskCreate`/`TaskUpdate`) with dependency graph + TUI widget |
 | **Reference content** | Everything in SKILL.md | Everything in SKILL.md | Inline guidance + separate reference files loaded on demand |
-| **Plan tracker** | — | — | `plan_tracker` tool with TUI progress widget |
 
 ## Architecture
 
 ```
 pi-superpowers-plus/
-├── agents/                            # Bundled agent definitions (4 agents)
-│   ├── implementer.md                 # Strict TDD implementation agent
-│   ├── worker.md                      # General-purpose task agent
-│   ├── code-reviewer.md               # Production readiness reviewer
-│   └── task-reviewer.md               # Task reviewer (spec + code quality)
-├── extensions/
-│   ├── logging.ts                     # File-based diagnostic logger (10KB truncation, time-based rotation)
-│   ├── plan-tracker.ts                # Task tracking tool + TUI widget
-│   ├── plan-tracker-state.ts          # Task list state persistence
-│   ├── plan-tracker-render.ts         # Shared TUI widget rendering
-│   └── subagent/
-│       ├── index.ts                   # Subagent tool registration + execution
-│       └── agents.ts                  # Agent discovery + frontmatter parsing
+├── agent-templates/                  # Copy-in agent definitions (4 templates, not auto-loaded)
+│   ├── implementer.md                # Strict TDD implementation agent
+│   ├── worker.md                     # General-purpose task agent
+│   ├── code-reviewer.md              # Production readiness reviewer
+│   └── task-reviewer.md              # Task reviewer (spec + code quality)
 ├── skills/                           # 13 workflow skills (26 markdown files)
 │   ├── using-superpowers/
 │   ├── brainstorming/
@@ -246,19 +238,21 @@ pi-superpowers-plus/
 │   ├── dispatching-parallel-agents/
 │   ├── using-git-worktrees/
 │   └── finishing-a-development-branch/
-└── tests/                            # 100 tests across 14 files
+└── README.md
 ```
 
 ## Development
 
 ```bash
-npm test                    # Run all tests
-npx vitest run tests/extension/plan-tracker/plan-tracker-tool.test.ts   # Run one file
+npm install
+npm test        # biome check .
 ```
+
+No compiled code or unit tests remain in this package — it ships skills and agent templates only. `npm test` runs `biome check .` (the lint/quality gate). Add tests back alongside any future code.
 
 ## Attribution
 
-Skill content adapted from [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent (MIT). This package builds on [pi-superpowers](https://github.com/coctostan/pi-superpowers) with a subagent dispatch tool, a plan-tracker tool, and leaner skill files with reference content split into separate files loaded on demand.
+Skill content adapted from [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent (MIT). This package builds on [pi-superpowers](https://github.com/coctostan/pi-superpowers). Subagent dispatch and task tracking are provided by [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) and [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) (installed separately).
 
 ## License
 
