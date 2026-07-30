@@ -15,3 +15,7 @@ pi install npm:@tintinweb/pi-tasks
 | Task tracking (`TaskCreate`, `TaskUpdate`, `TaskList`, ...) | [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) | `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`, `TaskOutput`, `TaskStop`, `TaskExecute` |
 
 There is **no fallback** if these packages aren't installed — skills reference the tools directly. For each tool's full parameter schema, see the package's own README (linked above); skills show the concrete call shapes you'll use day to day.
+
+## Skill prompt `location` attribute
+
+When pi loads a skill, it wraps the SKILL.md content in a prompt that includes a `location` attribute pointing at the skill's install path (e.g. `~/.pi/agent/git/.../pi-superpowers-plus/skills/<name>/SKILL.md`). This path exists **only** so you can resolve relative file references inside the skill (e.g. `references/foo.md`). It is **not** a working directory. Never `cd` there, never run `git log` or `ls` there, and never treat it as the user's project. The user's project is their current working directory — always work there.
