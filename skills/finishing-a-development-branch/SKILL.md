@@ -115,6 +115,11 @@ git branch -d <feature-branch>
 
 ### Option 2: Push and Create PR
 
+If there are any CI checks set up in Github, (eg in .github/workflows), you must execute those checks locally before proceeding. If any of the steps fails, fix
+them and re-run the checks before continuing. Do not create a PR until the checks succeed. If you
+cannot get the steps to succeed, stop and ask the user for advice.
+
+
 ```bash
 git push -u origin <feature-branch>
 # From a detached HEAD, name the new branch on the remote:
@@ -124,7 +129,8 @@ git push -u origin <feature-branch>
 Then create the pull/merge request against <base-branch> with the forge's
 tooling — its CLI if one is available, or the creation URL most forges
 print when you push — following the repo's PR template and conventions if
-present, and report the URL to your human partner.
+present, and report the URL to your human partner. Do not use a heredoc
+for the PR body.
 
 Keep the worktree — your human partner iterates on PR feedback there.
 
