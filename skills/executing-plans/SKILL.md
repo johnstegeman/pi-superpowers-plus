@@ -16,6 +16,8 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
+Call `set_phase({ phase: "development" })`.
+
 ## Prerequisites
 - Active branch (not main) or user-confirmed intent to work on main
 - Approved plan or clear task scope

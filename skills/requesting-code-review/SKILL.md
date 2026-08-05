@@ -12,6 +12,8 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 **Core principle:** Review early, review often.
 
+Call `set_phase({ phase: "development" })` — code review is still the development phase.
+
 ## When to Request Review
 
 **Mandatory:**

@@ -13,6 +13,8 @@ Code review requires technical evaluation, not emotional performance.
 
 **Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
 
+Call `set_phase({ phase: "development" })` — code review is still the development phase.
+
 ## The Response Pattern
 
 ```

@@ -120,6 +120,8 @@ digraph process {
 
 ## Setup
 
+Call `set_phase({ phase: "development" })` at the start of the skill.
+
 Ensure the work happens in an isolated workspace: use
 `/skill:using-git-worktrees` to create one or verify the existing one.
 Never start implementation on a main/master branch without your human
