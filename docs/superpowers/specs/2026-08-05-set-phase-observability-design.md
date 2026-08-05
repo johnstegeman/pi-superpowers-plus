@@ -42,6 +42,9 @@ of the two canonical values above.
 8. **No runtime inference and no session-persistence/replay** of phase state —
    the skills drive the calls; the event bus is the sole contract. (Approach 1;
    rejects the appendEntry/persistence idea from Approach 3 as YAGNI.)
+9. **No deduplication.** Every `set_phase` call emits unconditionally, even
+   when the previous call was already in the same phase (e.g. code review
+   right after executing both emit `development`).
 
 ## File Changes
 
