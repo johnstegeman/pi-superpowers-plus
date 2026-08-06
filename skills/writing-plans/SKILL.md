@@ -15,6 +15,7 @@ Write comprehensive implementation plans assuming the engineer has zero context 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
+Call `set_phase({ phase: "brainstorming" })` — this is still the brainstorming phase.
 
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
@@ -131,7 +132,34 @@ Expected: PASS
 git add tests/path/test.py src/path/file.py
 git commit -m "feat: add specific feature"
 ```
+
+---
+
+### Task N+1: [Next Component Name]
+
+(Repeat the same shape for every task. After the LAST task, place a final
+`---` before any trailing section such as `## Verification` or `## Summary` —
+see Task Separation below.)
 ````
+
+## Task Separation
+
+Each task MUST end with an unfenced `---` (three or more hyphens) on its own
+line, immediately followed (after optional blank lines) by the next task's
+`### Task N` heading or a non-task trailing section. An extractor named by
+one task number (e.g. a task-brief script) needs a definite end-of-task
+delimiter, so the rule is absolute:
+
+- Between consecutive tasks: `---`, blank line, `### Task N+1`.
+- After the last task, before any trailing section (`## Verification`,
+  `## Summary`, `## Notes`, etc.): `---`, then the section heading.
+- NEVER use `---` inside a task body (e.g. between `**Files:**` and the
+  first step). The `**Step N:**` labels are bold text, not headings, so
+  an extractor would not mistake them for a boundary — but keep bodies
+  free of `---` anyway so the format stays unambiguous.
+
+A `---` line inside a code fence is literal markdown content (the file
+content the task edits) and is NOT a separator.
 
 ## No Placeholders
 

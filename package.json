@@ -19,14 +19,22 @@
   "files": [
     "agent-templates/",
     "skills/",
+    "extensions/",
     "banner-plus.jpg",
     "LICENSE",
     "README.md"
   ],
   "pi": {
+    "extensions": [
+      "./extensions"
+    ],
     "skills": [
       "skills"
     ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15"
