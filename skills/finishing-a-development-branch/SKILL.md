@@ -165,7 +165,11 @@ Then clean up the worktree (Step 6) and force-delete the branch:
 git branch -D <feature-branch>
 ```
 
-## Step 6: Cleanup Workspace
+## Step 6: Clear the phase
+
+ call `set_phase({ phase: "" })`
+
+## Step 7: Cleanup Workspace
 
 **Runs for Option 1 and confirmed discards.** Options 2 and 3 always
 preserve the worktree. Both callers have already changed directory to the
