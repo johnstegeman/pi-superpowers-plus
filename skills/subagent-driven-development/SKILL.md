@@ -184,7 +184,13 @@ and fix-round diffs need it.
 
 - **Task brief:** before dispatching an implementer, run this skill's
   `scripts/task-brief PLAN_FILE N` — it extracts the task's full text to a
-  uniquely named file and prints the path. Compose the dispatch so the
+  uniquely named file and prints the path. The extractor relies on the plan
+  format that `/skill:writing-plans` mandates: tasks are delimited by an
+  unfenced `---` on its own line (before the next `### Task` heading, and
+  before any trailing section after the last task). Tasks written to that
+  format extract cleanly — including the last task, which ends at the
+  `---`-before-trailing-section instead of running off the end of the
+  plan. Compose the dispatch so the
   brief stays the single source of requirements. Your dispatch should
   contain: (1) one line on where this task fits in the project; (2) the
   brief path, introduced as "read this first — it is your requirements,
