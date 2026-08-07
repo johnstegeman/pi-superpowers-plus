@@ -16,6 +16,7 @@ Dispatch a subagent with this prompt:
 
     ## The Task
 
+    call `set_phase({ phase: "development" })`.
     Read the task brief: [BRIEF_FILE]
 
     ## The Findings Under Verification
