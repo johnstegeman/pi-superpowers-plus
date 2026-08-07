@@ -14,6 +14,8 @@ disable-model-invocation: true
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
+**At the start of the skill**, call `set_phase({ phase: "finishing" })`.
+
 ## Step 1: Verify Tests
 
 Run the project's full test suite (`npm test` / `cargo test` / `pytest` / `go test ./...`).
