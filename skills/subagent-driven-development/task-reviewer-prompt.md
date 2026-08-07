@@ -17,6 +17,7 @@ Dispatch a subagent with this prompt:
 
     ## What Was Requested
 
+    call `set_phase({ phase: "brainstorming" })`.
     Read the task brief: [BRIEF_FILE]
 
     Global constraints from the spec/design that bind this task:
