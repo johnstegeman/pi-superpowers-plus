@@ -389,7 +389,8 @@ Do NOT automatically dispatch final review or start the finishing skill. The use
 
 ## Final Review
 
-After the user confirms, the final whole-branch review gets a package too:
+After the user confirms, At the start of the skill, call `set_phase({ phase: "final review" })`.
+The final whole-branch review gets a package too:
 run `scripts/review-package PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE is the
 branch point) and dispatch the `code-reviewer` agent with the
 [code-reviewer.md](../requesting-code-review/code-reviewer.md) template from
