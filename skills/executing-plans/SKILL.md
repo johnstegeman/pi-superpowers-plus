@@ -28,17 +28,20 @@ Call `set_phase({ phase: "development" })`.
 1. Read plan file
 2. Review critically - identify any questions or concerns about the plan
 3. If concerns: Raise them with your human partner before starting
-4. If no concerns: Create a task per plan task via `TaskCreate({ subject:
-   "Task N: <name>", description: "<one-line summary>" })` and proceed
+4. If no concerns: Create a beads issue per plan task via `beads_create({
+   title: "Task N: <name>", description: "<one-line summary>" })` (persistent —
+   no `ephemeral` flag). Note each returned id; you'll pass it to
+   `beads_update` / `beads_close` as the task proceeds, then proceed.
 
 ### Step 2: Execute Batch
 **Default: First 3 tasks**
 
 For each task:
-1. Update task status via `TaskUpdate({ taskId: <id>, status: "in_progress" })`
+1. Mark the task in progress via `beads_update({ id: "<id>", status: "in_progress" })`
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
-4. Update task status via `TaskUpdate({ taskId: <id>, status: "completed" })`
+4. Close the task via `beads_close({ ids: "<id>" })` — beads has no
+   "completed" status; completion is a closed persistent issue
 
 ### Step 3: Report
 When batch complete:

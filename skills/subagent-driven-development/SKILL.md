@@ -153,11 +153,12 @@ a ledger file, not only in todos.
   that happens, recover from `git log`.
 
 Read the plan once, note its context and Global Constraints, and create a
-task per plan task via `TaskCreate({ subject: "Task N: <name>", description:
-"<one-line summary>" })` — one `TaskCreate` call per task. Note each returned
-task ID; you'll pass it to `TaskUpdate` when the task is complete. If the
-plan states tasks depend on each other, wire those with `addBlockedBy` on the
-dependent task's `TaskUpdate` (or `addBlocks` on the prerequisite).
+beads issue per plan task via `beads_create({ title: "Task N: <name>",
+description: "<one-line summary>" })` — one `beads_create` call per task,
+persistent (no `ephemeral` flag). Note each returned id; you'll pass it to
+`beads_close` when the task completes. If the plan states tasks
+depend on each other, wire those with `beads_dep({ issue: "<dependent>",
+blocker: "<prerequisite>" })` (blocker must be done before issue).
 
 Before dispatching Task 1, scan the plan once for conflicts:
 
@@ -372,8 +373,7 @@ message as your other bookkeeping:
 - `Task <N>: complete (commits <base7>..<head7>, <K> parked)` after a
   tripped breaker
 
-Then mark the task complete via `TaskUpdate({ taskId: <id>, status:
-"completed" })` and move on. Never
+Then close the task via `beads_close({ ids: "<id>" })` and move on. Never
 move to the next task while the review has open Critical/Important issues
 that are neither fixed nor parked-with-ruling at the cap.
 
