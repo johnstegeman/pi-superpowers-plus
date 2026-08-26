@@ -9,6 +9,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Task tracking migrated from `@tintinweb/pi-tasks` to beads (a `pi-beads` fork).** Durable plan-step tracking (`executing-plans`, `subagent-driven-development`) now creates **persistent beads issues** per plan step (`beads_create`, `beads_update`, `beads_close`, `beads_dep`) — repo-owned, synced, auditable. Session phase bookkeeping (`brainstorming` checklist items; the "Planning"/"Implement"/"Verify" phase markers in `writing-plans`, `test-driven-development`, `verification-before-completion`) now uses **self-owned wisps** (`beads_create({ ..., ephemeral: true })`) created at phase start and closed at completion — ephemeral, excluded from sync, purged via `bd purge` once closed. `pi-tasks` is removed as a prerequisite; `pi-subagents` (`Agent` tool) is unaffected. **Requires** the forked pi-beads: upstream v0.2.2 lacks the `ephemeral` flag on `beads_create` that wisps depend on.
+
 ### Removed
 
 - **Removed the bundled `subagent` and `plan_tracker` extensions entirely** (`extensions/` directory, `agents/` bundled definitions, and `tests/`). These are replaced by two companion packages the user installs separately: [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) (in-process subagent dispatch via `createAgentSession` — no subprocess, no stdout parsing, no hand-rolled inactivity watchdog) and [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) (dependency-graph task tracking with `TaskCreate`/`TaskUpdate`/`TaskList`). This eliminates the inactivity-timeout bug class by construction (no subprocess lifecycle left in this repo) and brings UX upgrades the bundled tools lacked: a persistent widget, FleetView, mid-run steering, session resume, background/scheduled dispatch, and bidirectional task dependencies. **Breaking change:** skills now reference `Agent(...)` / `TaskCreate(...)` / `TaskUpdate(...)` directly with no fallback path — both prerequisite packages must be installed. See the README Prerequisites section for install commands.
