@@ -155,7 +155,7 @@ a ledger file, not only in todos.
 Read the plan once, note its context and Global Constraints, and create a
 beads issue per plan task via `beads_create({ title: "Task N: <name>",
 description: "<one-line summary>" })` — one `beads_create` call per task,
-persistent (no `ephemeral` flag). note each returned id; you'll pass it to
+persistent (no `ephemeral` flag). Note each returned id; you'll pass it to
 `beads_close` when the task completes. If the plan states tasks
 depend on each other, wire those with `beads_dep({ issue: "<dependent>",
 blocker: "<prerequisite>" })` (blocker must be done before issue).
