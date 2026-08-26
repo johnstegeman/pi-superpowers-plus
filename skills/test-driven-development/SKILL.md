@@ -15,6 +15,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
+**Track the phase:** when the TDD implementation cycle begins, create a wisp for the implement phase via `beads_create({ title: "Implement", ephemeral: true })` — note the returned id.
+
 ## Prerequisites
 - Active branch (not main) or user-confirmed intent to work on main
 - Approved plan or clear task scope
@@ -252,4 +254,4 @@ Trivial change → relevant tests run after (Scenario 3)
 
 No exceptions without your human partner's permission.
 
-When the TDD implementation cycle is complete (all tests green, code committed), mark the implement phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer).
+When the TDD implementation cycle is complete (all tests green, code committed), close the implement wisp you created: `beads_close({ ids: "<id>" })`.

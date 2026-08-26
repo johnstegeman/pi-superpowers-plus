@@ -17,6 +17,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 Call `set_phase({ phase: "writing plan" })`
 
+At the start of planning, create a wisp to track the phase: `beads_create({ title: "Planning", ephemeral: true })` — note the returned id.
+
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
 **Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
@@ -185,7 +187,7 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After saving the plan, mark the planning phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer).
+After saving the plan, close the planning wisp you created: `beads_close({ ids: "<id>" })`.
 
 Then offer execution choice:
 

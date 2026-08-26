@@ -39,7 +39,7 @@ After the user answers a question, it's tempting to treat that as "enough" and f
 
 ## Checklist
 
-You MUST create a task for each of these items and complete them in order. Only mark a task complete once its real output actually exists in the conversation (see the hard-gate above) — never mark several in a row within the same turn.
+You MUST create a wisp for each of these items via `beads_create({ title: "<checklist item>", description: "<item detail>", ephemeral: true })` and complete them in order. Only `beads_close({ ids: "<id>" })` an item once its real output actually exists in the conversation (see the hard-gate above) — never close several in a row within the same turn.
 
 1. **Explore project context** — check files, docs, recent commits in the **user's current working directory** (not the skill's install directory — see `using-superpowers` → Working Directory)
 2. **Ask clarifying questions** — one at a time, across as many turns as it takes, waiting for the user's actual reply each time, until you understand purpose/constraints/success criteria. Do not mark this task complete after a single question.
@@ -126,7 +126,7 @@ digraph brainstorming {
 - Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
   - (User preferences for spec location override this default)
 - Commit the design document to git
-- Mark the brainstorm phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer)
+- Mark the brainstorm phase complete: close all remaining checklist wisps in one call — `beads_close({ ids: "<id-1> <id-2> ..." })` (multiple space/comma-separated ids are accepted)
 
 **Spec Self-Review:**
 After writing the spec document, look at it with fresh eyes:

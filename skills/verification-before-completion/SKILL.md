@@ -18,6 +18,7 @@ disable-model-invocation: true
 - Run verification commands: yes
 - Read code and output: yes
 - Edit source code: no
+- When verification begins, create a wisp to track the verify phase via `beads_create({ title: "Verify", ephemeral: true })` — note the returned id
 
 ## The Iron Law
 
@@ -130,4 +131,4 @@ Skip any step = lying, not verifying
 
 Before running `git commit`, `git push`, or `gh pr create`, check for yourself: has a passing test suite run since your last source file edit? If not, run it first — don't rely on tooling to catch this for you.
 
-When all verification passes, mark the verify phase complete: call `TaskUpdate({ taskId: <id>, status: "completed" })` for the current phase's task (the task ID comes from whatever task list the invoking context already created — pi-tasks has no implicit "current task" pointer).
+When all verification passes, close the verify wisp you created: `beads_close({ ids: "<id>" })`.
