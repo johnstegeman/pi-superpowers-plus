@@ -6,15 +6,19 @@ Skills speak in actions ("dispatch a subagent", "create a task", "read a file").
 
 ```bash
 pi install npm:@tintinweb/pi-subagents
-pi install npm:@tintinweb/pi-tasks
+pi install <forked-pi-beads-package>   # fork of @abix5/pi-beads with ephemeral support
 ```
 
 | Action skills request | Package | Tool |
 | --- | --- | --- |
 | Dispatch a subagent (`Agent({ subagent_type, prompt, description, ... })`) | [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) | `Agent`, `get_subagent_result`, `steer_subagent` |
-| Task tracking (`TaskCreate`, `TaskUpdate`, `TaskList`, ...) | [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) | `TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`, `TaskOutput`, `TaskStop`, `TaskExecute` |
+| Task tracking (`beads_create`, `beads_update`, `beads_close`, `beads_dep`) | forked [`pi-beads`](https://github.com/abix5/pi-beads) (requires the fork's `ephemeral` support — upstream v0.2.2 lacks it) | `beads_ready`, `beads_list`, `beads_show`, `beads_create`, `beads_update`, `beads_close`, `beads_dep`, `beads_undep`, `beads_comment` |
 
 There is **no fallback** if these packages aren't installed — skills reference the tools directly. For each tool's full parameter schema, see the package's own README (linked above); skills show the concrete call shapes you'll use day to day.
+
+- **Pass `ephemeral: true` to `beads_create` for wisps** (session phase bookkeeping — excluded from sync, purged via `bd purge` when closed); omit it for persistent issues (durable plan-step work).
+- **Repo routing:** omit `repo` on `beads_create` to target the session cwd's repo; from an umbrella root, pass the owning repo explicitly (`repo` is required there). Skills never hardcode a repo name.
+- `pi-beads` registers its own `beads` skill — see it for the full tool reference rather than re-documenting the API here.
 
 ## Skill prompt `location` attribute
 

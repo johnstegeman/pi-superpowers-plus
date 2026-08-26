@@ -12,7 +12,7 @@ Your coding agent doesn't just know the rules - it follows them. Skills teach th
 
 **Two companion packages** provide the tooling the skills reference (installed separately, see Prerequisites):
 - [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) — registers the `Agent` / `get_subagent_result` / `steer_subagent` tools for dispatching implementation and review work to isolated in-process subagents, with a persistent widget, FleetView, mid-run steering, and session resume.
-- [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) — registers the `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` / `TaskOutput` / `TaskStop` / `TaskExecute` tools for dependency-graph task tracking with a persistent widget.
+- **forked [`pi-beads`](https://github.com/abix5/pi-beads)** — registers the `beads_create` / `beads_update` / `beads_close` / `beads_dep` / `beads_list` / `beads_show` tools for beads issue tracking — persistent issues for plan work, wisps (`ephemeral: true`) for session phase bookkeeping — with an in-progress widget. The fork is required for `ephemeral` support (upstream v0.2.2 lacks it).
 
 There's no runtime enforcement layer watching tool calls — the discipline (TDD, verification before claiming done, branch safety, etc.) lives entirely in the skill instructions the agent reads and follows.
 
@@ -22,10 +22,10 @@ This package provides skills and agent templates only — it no longer bundles i
 
 ```bash
 pi install npm:@tintinweb/pi-subagents
-pi install npm:@tintinweb/pi-tasks
+pi install <forked-pi-beads-package>
 ```
 
-The skills reference `Agent(...)`, `TaskCreate(...)`, `TaskUpdate(...)`, etc. directly. There is **no fallback** if these packages aren't installed — the skills assume the tools are available.
+The skills reference `Agent(...)` and the `beads_*` tools directly. There is **no fallback** if these packages aren't installed — the skills assume the tools are available. Beads must also be initialized in a project (a `.beads/` directory) for the tracking tools to work. Task tracking (`beads_create`/`beads_update`/`beads_close`) is persistent for plan-step work and wisp-based (`ephemeral: true`) for session phase bookkeeping.
 
 ## Install
 
@@ -66,7 +66,7 @@ If you're currently using [`pi-superpowers`](https://github.com/coctostan/pi-sup
 ### What's new in `pi-superpowers-plus`
 - **Three-scenario TDD model** — new feature (full TDD), modifying tested code (run existing tests), trivial change (judgment) — applied consistently across skills, agent templates, and plan templates
 - **Subagent dispatch** via [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) (`Agent` tool) for delegating implementation/review work to isolated in-process subagents
-- **Task tracking** via [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) (`TaskCreate`/`TaskUpdate`/`TaskList` tools) with a dependency graph and TUI widget
+- **Task tracking** via forked [`pi-beads`](https://github.com/abix5/pi-beads) (`beads_create`/`beads_update`/`beads_close`/`beads_dep` tools) — persistent issues for plan work, self-owned wisps for phase bookkeeping
 - Restored inline red flags, rationalizations, and verification checklists in several skills for more self-contained guidance
 
 ### Migration
@@ -74,7 +74,7 @@ Replace `pi-superpowers` with `pi-superpowers-plus` in your config, and install 
 
 ```json
 {
-  "packages": ["npm:pi-superpowers-plus", "npm:@tintinweb/pi-subagents", "npm:@tintinweb/pi-tasks"]
+  "packages": ["npm:pi-superpowers-plus", "npm:@tintinweb/pi-subagents", "<forked-pi-beads-package>"]
 }
 ```
 
@@ -85,8 +85,8 @@ Notes:
 
 `pi-superpowers-plus` uses pi's runtime capabilities alongside skill content:
 - **Three-scenario TDD** — skills, agent templates, and plan templates all use the same model: new feature (full TDD), modifying tested code (run existing tests), trivial change (use judgment).
-- The **TUI widgets** from `pi-tasks` and `pi-subagents` show task progress and active agents above the editor.
-- Tools like **`TaskCreate`/`TaskUpdate`** and **`Agent`** store execution state and run subagents outside the prompt.
+- The **TUI widgets** from `pi-beads` and `pi-subagents` show in-progress issues and active agents above the editor.
+- Tools like **`beads_create`/`beads_update`/`beads_close`** and **`Agent`** store execution state and run subagents outside the prompt.
 - Reference material that used to bloat a skill's `SKILL.md` was split into separate reference files in the skill's own directory (e.g. `reference/rationalizations.md`), which the agent reads on demand instead of loading everything up front.
 
 To make this concrete, here's the size of each skill's `SKILL.md` compared to the original [`coctostan/pi-superpowers`](https://github.com/coctostan/pi-superpowers) (approximate KB, at time of writing). Across the shared skills, total `SKILL.md` content went from **67.5KB → 66.5KB**. Skills that shrank moved content into separate reference files loaded on demand; skills that grew restored inline red flags, rationalizations, and verification checklists for self-contained guidance.
@@ -123,7 +123,7 @@ Brainstorm → Plan → Execute → Verify → Review → Finish
 | **Review** | `/skill:requesting-code-review` | Dispatches a reviewer subagent to catch issues before merge |
 | **Finish** | `/skill:finishing-a-development-branch` | Presents merge/PR/keep/discard options and cleans up |
 
-Progress through the workflow is tracked with the `TaskCreate`/`TaskUpdate` tools from `@tintinweb/pi-tasks` as the agent works through each phase's checklist; the `pi-tasks` widget renders the task list above the editor.
+Progress through the workflow is tracked with the beads tools (`beads_create`/`beads_update`/`beads_close`) as the agent works through each phase — durable plan-step work as persistent issues, session phase bookkeeping as wisps (`ephemeral: true`); the `pi-beads` widget renders in-progress issues above the editor.
 
 ### Supporting Skills
 
@@ -212,7 +212,7 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent, po
 | **Debug discipline** | Manual discipline | Manual discipline | Manual discipline |
 | **Subagent dispatch** | — | — | `@tintinweb/pi-subagents` (`Agent` tool) + 4 agent templates |
 | **TDD in subagents** | — | — | Three-scenario TDD instructions in agent templates + prompt templates |
-| **Task tracking** | — | — | `@tintinweb/pi-tasks` (`TaskCreate`/`TaskUpdate`) with dependency graph + TUI widget |
+| **Task tracking** | — | — | beads via forked `pi-beads` (`beads_create`/`beads_update`/`beads_close`) — persistent issues + wisps |
 | **Reference content** | Everything in SKILL.md | Everything in SKILL.md | Inline guidance + separate reference files loaded on demand |
 
 ## Architecture
@@ -252,7 +252,7 @@ No compiled code or unit tests remain in this package — it ships skills and ag
 
 ## Attribution
 
-Skill content adapted from [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent (MIT). This package builds on [pi-superpowers](https://github.com/coctostan/pi-superpowers). Subagent dispatch and task tracking are provided by [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) and [`@tintinweb/pi-tasks`](https://github.com/tintinweb/pi-tasks) (installed separately).
+Skill content adapted from [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent (MIT). This package builds on [pi-superpowers](https://github.com/coctostan/pi-superpowers). Subagent dispatch is provided by [`@tintinweb/pi-subagents`](https://github.com/tintinweb/pi-subagents) and task tracking by beads (a [`pi-beads`](https://github.com/abix5/pi-beads) fork with `ephemeral`/wisp support; installed separately).
 
 ## License
 
