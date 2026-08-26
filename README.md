@@ -22,10 +22,10 @@ This package provides skills and agent templates only — it no longer bundles i
 
 ```bash
 pi install npm:@tintinweb/pi-subagents
-pi install <forked-pi-beads-package>
+pi install <forked-pi-beads-package>   # fork of @abix5/pi-beads with ephemeral support
 ```
 
-The skills reference `Agent(...)` and the `beads_*` tools directly. There is **no fallback** if these packages aren't installed — the skills assume the tools are available. Beads must also be initialized in a project (a `.beads/` directory) for the tracking tools to work. Task tracking (`beads_create`/`beads_update`/`beads_close`) is persistent for plan-step work and wisp-based (`ephemeral: true`) for session phase bookkeeping.
+The skills reference `Agent(...)` and the `beads_*` tools directly. There is **no fallback** if these packages aren't installed — the skills assume the tools are available. Beads must also be initialized in a project (a `.beads/` directory) for the tracking tools to work. Task tracking (`beads_create`/`beads_update`/`beads_close`) is persistent for plan-step work and wisp-based (`ephemeral: true`) for session phase bookkeeping. From an umbrella root, pass the owning repo explicitly to `beads_create` (`repo` is required there); otherwise it defaults to the session's repo.
 
 ## Install
 

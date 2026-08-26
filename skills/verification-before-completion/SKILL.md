@@ -18,7 +18,8 @@ disable-model-invocation: true
 - Run verification commands: yes
 - Read code and output: yes
 - Edit source code: no
-- When verification begins, create a wisp to track the verify phase via `beads_create({ title: "Verify", ephemeral: true })` — note the returned id
+
+**Track the phase:** when verification begins, create a wisp via `beads_create({ title: "Verify", ephemeral: true })` — note the returned id.
 
 ## The Iron Law
 
