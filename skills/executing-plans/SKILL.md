@@ -72,6 +72,8 @@ After all tasks complete and verified:
 
 **Ask for clarification rather than guessing.**
 
+If you stop on a blocker or abort mid-batch, do not silently leave the current task bead in `in_progress`/`open`: mark it `blocked` (`beads_update({ id: "<id>", status: "blocked", appendNotes: "<blocker>" })`) or leave it open for resume, and on resume re-mark it `in_progress` (`beads_update({ id: "<id>", status: "in_progress" })`) to continue.
+
 ## When the Plan Is Wrong
 
 **Different from being blocked** — you're not stuck, but you've learned something that makes the remaining plan unworkable.
