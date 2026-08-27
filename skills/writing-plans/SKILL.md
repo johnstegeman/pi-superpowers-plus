@@ -17,7 +17,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 Call `set_phase({ phase: "writing plan" })`
 
-At the start of planning, create a wisp to track the phase: `beads_create({ title: "Planning", ephemeral: true })` — note the returned id.
+At the start of planning, create a wisp to track the phase: `beads_create({ title: "Planning", ephemeral: true })` — note the returned id, then mark it in progress: `beads_update({ id: "<id>", status: "in_progress" })` so the beads widget shows the planning phase being worked on.
 
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
@@ -187,7 +187,8 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After saving the plan, close the planning wisp you created: `beads_close({ ids: "<id>" })`.
+After saving the plan, close the planning wisp you created: `beads_close({ ids: "<id>" })`, then clear the session's done wisps: `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched).
+If the plan is NOT fully written for any reason (blocked, redirected, stopped early), close the planning wisp you created (`beads_close({ ids: "<id>" })`) and run the same `bd mol wisp gc --closed --force` — never leave the wisp open.
 
 Then offer execution choice:
 
