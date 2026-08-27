@@ -14,13 +14,18 @@ Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it h
 ## Session Start: beads cleanup
 
 Before beginning work, clean up beads left behind by interrupted sessions
-(a stopped/restarted session cannot close its own wisps):
+(a stopped/restarted session cannot close its own wisps). This step applies
+only in a beads-initialized project: if the working directory has no
+`.beads/` database (check `bd where`), skip it.
 
-1. Run `bd mol wisp gc --dry-run` to list abandoned wisps (untouched past
-   `--age` and not closed) — leftovers from a stopped/restarted session.
-2. Review the list. If any listed wisp belongs to work you're about to
-   resume, preserve it with `bd mol squash <id>` (gc deletes without leaving
-   a digest) or use a longer `--age`.
+1. Run `bd mol wisp gc --dry-run --age 24h` to list abandoned wisps (not
+   updated for 24h and not closed) — leftovers from a stopped/restarted
+   session.
+2. Review the list. If a listed wisp belongs to work you're about to resume,
+   keep it by refreshing its timestamp — `bd update <id> --notes "resuming
+   <phase>"` — so the sweep below skips it, or use a longer `--age`.
+   (`bd mol squash <id>` does NOT promote a directly-created phase wisp; it
+   only condenses molecule hierarchies and leaves the wisp open.)
 3. Delete the rest: `bd mol wisp gc --age 24h --force` (a wisp untouched for
    a full day and not closed is abandoned; the default 1h threshold is too
    aggressive for resumed phases).

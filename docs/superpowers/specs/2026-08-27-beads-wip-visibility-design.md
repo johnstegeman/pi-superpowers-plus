@@ -43,13 +43,13 @@ Sites: `writing-plans` ("Planning"), `test-driven-development` ("Implement"), `v
 A killed session cannot run skill instructions, so the graceful-exit close can't cover it. Reclaim these deterministically at the **next session start** with bd's stock garbage collection:
 
 ```
-bd mol wisp gc --dry-run          # preview abandoned wisps
+bd mol wisp gc --dry-run --age 24h  # preview abandoned wisps (same threshold as the sweep)
 bd mol wisp gc --age 24h --force  # delete wisps untouched 24h+ and not closed
 ```
 
 - `wisp gc` considers a wisp abandoned if it "hasn't been updated in `--age` and is not closed" — exactly the orphan class (open / abandoned `in_progress`). Preview is the default; deletion requires `--force`.
 - **Threshold:** `--age 24h` (recommended), not the default `1h`. 24h is unambiguous "abandoned" while still catching the observed 13–16h orphans at the next daily session start; `1h` is too aggressive for resumed long phases.
-- **Resume safeguard:** the skill rule runs `--dry-run` first and instructs: if any listed wisp belongs to work you're about to resume, `bd mol squash <id>` it (preserves a digest) or use a longer `--age` before forcing. This is the only judgment step; the sweep itself stays deterministic.
+- **Resume safeguard:** the skill rule runs `--dry-run --age 24h` first and instructs: if a listed wisp belongs to work you're about to resume, refresh its timestamp via `bd update <id> --notes "resuming <phase>"` (the sweep skips recently-updated wisps) or use a longer `--age` before forcing. `bd mol squash <id>` does NOT promote a directly-created wisp (verified against bd 1.2.2: "No ephemeral children found for molecule") — it only condenses molecule hierarchies, so it is not the preserve mechanism. This is the only judgment step; the sweep itself stays deterministic.
 - **Persistent issues are never touched** — `gc` is wisp-only. Durable plan-step tasks closed or `in_progress` are unaffected.
 - Lives in a new **Session Start** section of `using-superpowers` (the skill loaded at conversation start). No pi-beads fork change — this is stock bd 1.2.2.
 
@@ -120,4 +120,4 @@ The widget side (in the user's pi-beads fork) is **not** part of this repo's cha
 
 - `npx biome check .` clean (repo lint gate).
 - Grep: every `beads_create({ ... ephemeral: true })` site in `skills/` is followed by `beads_update({ id, status: "in_progress" })` and has a close path covering both completion and graceful exit; `using-superpowers` contains the `bd mol wisp gc` session-start rule; the four phase skills contain the `bd mol wisp gc --closed --force` phase-end step.
-- Manual smoke (as in the migration): run a phase skill in a `.beads/` project — wisp appears `◐` in the widget while the phase runs, `✓` on close, done panel empties after phase end; stop/start a session mid-WIP and confirm next session-start `gc --dry-run` flags the orphan.
+- Manual smoke (as in the migration): run a phase skill in a `.beads/` project — wisp appears `◐` in the widget while the phase runs, `✓` on close, done panel empties after phase end; stop/start a session mid-WIP and confirm next session-start `gc --dry-run --age 24h` flags the orphan AND that the resume-preserve path (`bd update <id> --notes "resuming <phase>"`) keeps the wisp intact after the forced sweep; run the session-start rule in a fresh non-beads directory and confirm it degrades gracefully (no error, step skipped).
