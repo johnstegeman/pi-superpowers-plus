@@ -11,6 +11,21 @@ Invoke relevant or requested skills before acting on a task. If it turns out wro
 
 Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it has a checklist, create a todo per item.
 
+## Session Start: beads cleanup
+
+Before beginning work, clean up beads left behind by interrupted sessions
+(a stopped/restarted session cannot close its own wisps):
+
+1. Run `bd mol wisp gc --dry-run` to list abandoned wisps (untouched past
+   `--age` and not closed) — leftovers from a stopped/restarted session.
+2. Review the list. If any listed wisp belongs to work you're about to
+   resume, preserve it with `bd mol squash <id>` (gc deletes without leaving
+   a digest) or use a longer `--age`.
+3. Delete the rest: `bd mol wisp gc --age 24h --force` (a wisp untouched for
+   a full day and not closed is abandoned; the default 1h threshold is too
+   aggressive for resumed phases).
+4. This touches **wisps only** — persistent issues are never affected.
+
 ## Working Directory
 
 Always work in the user's current working directory — the project the user opened or `cd`'d into. Never `cd` into or run commands against the directory where a skill file lives (the installed package directory). When a skill says "explore project context" or "check recent commits," it means the user's project, not the skill's install location. The skill's path appears in the prompt only so you can resolve relative file references inside the skill — it is not a working directory.
