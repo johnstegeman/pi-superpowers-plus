@@ -15,7 +15,7 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
-**Track the phase:** when the TDD implementation cycle begins, create a wisp for the implement phase via `beads_create({ title: "Implement", ephemeral: true })` — note the returned id.
+**Track the phase:** when the TDD implementation cycle begins, create a wisp for the implement phase via `beads_create({ title: "Implement", ephemeral: true })` — note the returned id, then mark it in progress: `beads_update({ id: "<id>", status: "in_progress" })` so the beads widget shows the implement phase being worked on.
 
 ## Prerequisites
 - Active branch (not main) or user-confirmed intent to work on main
@@ -254,4 +254,6 @@ Trivial change → relevant tests run after (Scenario 3)
 
 No exceptions without your human partner's permission.
 
-When the TDD implementation cycle is complete (all tests green, code committed), close the implement wisp you created: `beads_close({ ids: "<id>" })`.
+When the TDD implementation cycle is complete (all tests green, code committed), close the implement wisp you created: `beads_close({ ids: "<id>" })`, then clear the session's done wisps: `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched).
+
+If the cycle does not complete for any reason (blocked, redirected, stopped early), close the implement wisp you created (`beads_close({ ids: "<id>" })`) and run `bd mol wisp gc --closed --force` — never leave the wisp open.

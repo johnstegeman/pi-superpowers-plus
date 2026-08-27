@@ -39,7 +39,7 @@ After the user answers a question, it's tempting to treat that as "enough" and f
 
 ## Checklist
 
-You MUST create a wisp for each of these items via `beads_create({ title: "<checklist item>", description: "<item detail>", ephemeral: true })` and complete them in order. Only `beads_close({ ids: "<id>" })` an item once its real output actually exists in the conversation (see the hard-gate above) — never close several in a row within the same turn.
+You MUST create a wisp for each of these items via `beads_create({ title: "<checklist item>", description: "<item detail>", ephemeral: true })` and complete them in order. When you begin an item, mark it in progress: `beads_update({ id: "<id>", status: "in_progress" })` so the beads widget shows the item being worked on — only the current item is `in_progress` at a time. Only `beads_close({ ids: "<id>" })` an item once its real output actually exists in the conversation (see the hard-gate above) — never close several in a row within the same turn.
 
 1. **Explore project context** — check files, docs, recent commits in the **user's current working directory** (not the skill's install directory — see `using-superpowers` → Working Directory)
 2. **Ask clarifying questions** — one at a time, across as many turns as it takes, waiting for the user's actual reply each time, until you understand purpose/constraints/success criteria. Do not close this wisp after a single question.
@@ -126,7 +126,7 @@ digraph brainstorming {
 - Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
   - (User preferences for spec location override this default)
 - Commit the design document to git
-- Mark the brainstorm phase complete: close any checklist wisps still open in one call — `beads_close({ ids: "<id-1> <id-2> ..." })` (the one allowed batch exception to closing one-at-a-time; multiple space/comma-separated ids are accepted)
+- Mark the brainstorm phase complete: close any checklist wisps still open in one call — `beads_close({ ids: "<id-1> <id-2> ..." })` (the one allowed batch exception to closing one-at-a-time; multiple space/comma-separated ids are accepted), then clear the session's done wisps: `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched). If brainstorming stops early for any reason (blocked, redirected, session stopped), close any open checklist wisps you still hold (`beads_close({ ids: ... })`) and run the same purge — never leave a checklist wisp open.
 
 **Spec Self-Review:**
 After writing the spec document, look at it with fresh eyes:

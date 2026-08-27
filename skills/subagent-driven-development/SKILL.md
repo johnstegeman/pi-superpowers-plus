@@ -214,6 +214,7 @@ and fix-round diffs need it.
   fix-loop rounds 1-3 resume this agent via `Agent({ subagent_type:
   "implementer", resume: <agent_id>, ... })`.
 - Never dispatch multiple implementation subagents in parallel (conflicts).
+- Never hand bead management to the implementer. Task tracking (creating, updating, closing this task's bead) is the controller's job alone, and the task closes only after its review passes. The implementer prompt template carries this guardrail — do not override it.
 
 Template: [implementer-prompt.md](implementer-prompt.md)
 
@@ -232,6 +233,8 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 2. If the task requires more reasoning, re-dispatch
 3. If the task is too large, break it into smaller pieces
 4. If the plan itself is wrong, escalate to the human
+
+Update the task's bead: `beads_update({ id: "<id>", status: "blocked", appendNotes: "<blocker>" })`. If the task is later re-dispatched (anything other than escalate-to-human), re-mark it `in_progress` when work resumes — never leave it silently in `in_progress`/`open`.
 
 **Never** ignore an escalation or force a retry without changes. If the implementer said it's stuck, something needs to change.
 
