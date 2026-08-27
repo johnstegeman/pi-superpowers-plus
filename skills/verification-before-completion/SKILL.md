@@ -19,7 +19,7 @@ disable-model-invocation: true
 - Read code and output: yes
 - Edit source code: no
 
-**Track the phase:** when verification begins, create a wisp via `beads_create({ title: "Verify", ephemeral: true })` — note the returned id.
+**Track the phase:** when verification begins, create a wisp via `beads_create({ title: "Verify", ephemeral: true })` — note the returned id, then mark it in progress: `beads_update({ id: "<id>", status: "in_progress" })` so the beads widget shows the verification phase being worked on.
 
 ## The Iron Law
 
@@ -132,4 +132,6 @@ Skip any step = lying, not verifying
 
 Before running `git commit`, `git push`, or `gh pr create`, check for yourself: has a passing test suite run since your last source file edit? If not, run it first — don't rely on tooling to catch this for you.
 
-When all verification passes, close the verify wisp you created: `beads_close({ ids: "<id>" })`.
+When all verification passes, close the verify wisp you created: `beads_close({ ids: "<id>" })`, then clear the session's done wisps: `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched).
+
+If verification does not complete for any reason (blocked, redirected, stopped early), close the verify wisp you created (`beads_close({ ids: "<id>" })`) and run `bd mol wisp gc --closed --force` — never leave the wisp open.
