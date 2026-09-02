@@ -291,7 +291,7 @@ Add this to the plan document's existing Self-Review section (the checklist run 
 tasks are wired into beads), as a new numbered item:
 
 ```markdown
-5. **Lifecycle-duplicate check:** Does any task in this plan re-implement a phase the
+4. **Lifecycle-duplicate check:** Does any task in this plan re-implement a phase the
    molecule already executes as its own formula step — e.g. a task titled "write the
    design doc," "get the spec approved," or "get the plan approved"? Those belong to
    `write-spec`/`spec-approved`/`plan-approved`, not to a task under `implement`. Any
