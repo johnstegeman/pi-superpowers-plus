@@ -152,13 +152,12 @@ a ledger file, not only in todos.
 - `git clean -fdx` will destroy the workspace (it's git-ignored scratch); if
   that happens, recover from `git log`.
 
-Read the plan once, note its context and Global Constraints, and create a
-beads issue per plan task via `beads_create({ title: "Task N: <name>",
-description: "<one-line summary>" })` — one `beads_create` call per task,
-persistent (no `ephemeral` flag). Note each returned id; you'll pass it to
-`beads_close` when the task completes. If the plan states tasks
-depend on each other, wire those with `beads_dep({ issue: "<dependent>",
-blocker: "<prerequisite>" })` (blocker must be done before issue).
+Read the molecule once (`bd mol current <implement-step-id> --json`), note its context
+and Global Constraints from each task bead's description, and confirm the
+`plan-approved` gate is closed (`bd show <plan-approved-gate-id>`) before dispatching any
+subagent. Task ids and their `needs` ordering already exist as real dependency edges —
+no `TaskCreate`-equivalent step is needed here; `writing-plans` already created them
+(see its Task Structure section).
 
 Before dispatching Task 1, scan the plan once for conflicts:
 
@@ -376,7 +375,7 @@ message as your other bookkeeping:
 - `Task <N>: complete (commits <base7>..<head7>, <K> parked)` after a
   tripped breaker
 
-Then close the task via `beads_close({ ids: "<id>" })` and move on. Never
+Then close the task bead (`bd close <task-id> --reason "<summary>"`) and move on. Never
 move to the next task while the review has open Critical/Important issues
 that are neither fixed nor parked-with-ruling at the cap.
 
