@@ -1,6 +1,6 @@
 {
   "name": "pi-superpowers-plus",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Superpowers workflow skills adapted for pi",
   "keywords": [
     "pi-package"
@@ -20,6 +20,7 @@
     "agent-templates/",
     "skills/",
     "extensions/",
+    "formulas/",
     "banner-plus.jpg",
     "LICENSE",
     "README.md"

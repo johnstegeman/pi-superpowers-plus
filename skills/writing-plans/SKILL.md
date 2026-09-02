@@ -17,16 +17,17 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 Call `set_phase({ phase: "writing plan" })`
 
-At the start of planning, create a wisp to track the phase: `beads_create({ title: "Planning", ephemeral: true })` — note the returned id, then mark it in progress: `beads_update({ id: "<id>", status: "in_progress" })` so the beads widget shows the planning phase being worked on.
+At the start of planning, claim the `implement` step of the molecule brainstorming
+poured: `bd update <implement-step-id> --claim`. This is the container all real task
+beads are created under.
 
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- (User preferences for plan location override this default)
+**Plan output:** dynamic task beads under the molecule's `implement` step (see "Creating Tasks as Beads" below) — no markdown plan file is written.
 
 ## Boundaries
 - Read code and docs: yes
-- Write to docs/superpowers/plans/: yes
+- Write to docs/superpowers/plans/: no (plan output is beads, not a file)
 - Edit or create any other files: no
 
 ## Scope Check
@@ -144,6 +145,46 @@ git commit -m "feat: add specific feature"
 see Task Separation below.)
 ````
 
+## Creating Tasks as Beads
+
+Once the task breakdown above is written out in the plan document and has passed the
+lifecycle-duplicate check (Self-Review item 4), mirror it into real beads under the
+`implement` step:
+
+```bash
+# One gate, every real task depends on it — nothing executes until the human approves
+# the plan shape.
+GATE_ID=$(bd create "Plan reviewed / ready to execute" --parent <implement-step-id> -t task --json | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+bd gate create --type=human --blocks $GATE_ID --reason "Plan approval"
+
+# One bead per task, in order, each depending on the gate and on its plan-declared
+# predecessor:
+TASK1_ID=$(bd create "Task 1: <name>" --parent <implement-step-id> -t task -d "<full step-by-step instructions from the plan's Task 1 body>" --json | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+bd dep add $TASK1_ID $GATE_ID
+
+TASK2_ID=$(bd create "Task 2: <name>" --parent <implement-step-id> -t task -d "<full step-by-step instructions from the plan's Task 2 body>" --json | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+bd dep add $TASK2_ID $GATE_ID
+bd dep add $TASK2_ID $TASK1_ID   # only if the plan actually orders Task 2 after Task 1
+```
+
+Each task bead's `-d`/`--description` is the task's **entire** body from the plan
+document — every step, every code block, exactly as written. This bead is what
+`executing-plans`/`subagent-driven-development` read during execution; the plan.md
+document itself is no longer read at execution time (see Task 4/5).
+
+**Recording the plan-approval verdict** (same revise/recheck pattern as brainstorming's
+`design-approved`/`spec-approved` gates, Task 2 Step 3): when presenting the plan for
+review, don't just wait silently on the gate.
+- Approved: `bd update $GATE_ID --set-metadata review.verdict=done`, then
+  `bd gate resolve <the-gate-id-bd-gate-create-returned>`.
+- Changes requested: `bd update $GATE_ID --set-metadata review.verdict=iterate`, write
+  a specific revision summary (`bd comment $GATE_ID "<what needs to change>"`), revise
+  the affected task beads' descriptions in place (`bd update <task-id> --description
+  "<revised instructions>"`) or add/remove/re-order task beads as needed, and re-present
+  — do NOT resolve the gate. On resume, read the existing task beads under `implement`
+  (`bd mol show <implement-step-id>`) plus the latest revision summary before revising,
+  rather than starting the breakdown over.
+
 ## Task Separation
 
 Each task MUST end with an unfenced `---` (three or more hyphens) on its own
@@ -183,16 +224,33 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
+4. **Lifecycle-duplicate check:** Does any task in this plan re-implement a phase the
+   molecule already executes as its own formula step — e.g. a task titled "write the
+   design doc," "get the spec approved," or "get the plan approved"? Those belong to
+   `write-spec`/`spec-approved`/`plan-approved`, not to a task under `implement`. Any
+   task that duplicates formula-owned work is a plan bug: remove it before wiring tasks
+   into beads in Step 3 below.
+
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
 ## Execution Handoff
 
-After saving the plan, close the planning wisp you created: `beads_close({ ids: "<id>" })`, then clear the session's done wisps: `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched).
-If the plan is NOT fully written for any reason (blocked, redirected, stopped early), close the planning wisp you created (`beads_close({ ids: "<id>" })`) and run the same `bd mol wisp gc --closed --force` — never leave the wisp open.
+After the task beads and `plan-approved` gate are created and wired, the `implement`
+step's own claim is left open on purpose — it stays `in_progress`, representing the
+whole implementation phase, until every task bead under it closes (see `executing-plans`
+Step 3, "Rewrite Complete Development"). Nothing further to close here; the plan is now
+the bead graph itself.
+
+If planning stops early for any reason (blocked, redirected, session stopped), leave
+`implement` and any partially-created task beads as-is — the next session resumes by
+reading `bd mol show <implement-step-id>` to see what's already wired.
 
 Then offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete — <N> tasks created under `<implement-step-id>`, gated by
+`<plan-approved-gate-id>`. Once you approve, I'll record `review.verdict=done` and
+resolve the gate to unblock execution (see Step 3's verdict recording). Two execution
+options:**
 
 **1. Subagent-Driven (this session)** - Fresh subagent per task with two-stage review. Better for plans with many independent tasks.
 

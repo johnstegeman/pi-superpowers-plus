@@ -11,9 +11,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Structural persistence moved from markdown plan files to a beads molecule.**
+  Brainstorming pours a `superpowers-workflow` formula into a real epic; plan tasks are
+  beads with full instructions in their descriptions (no more
+  `docs/superpowers/plans/*.md`); execution reads `bd ready --mol`/`bd mol current`
+  instead of parsing checkboxes. Spec documents remain markdown files for diffability,
+  linked from their bead via `--spec-id`. See
+  `docs/superpowers/specs/2026-09-02-beads-as-persistence-layer-design.md`.
 - **Task tracking migrated from `@tintinweb/pi-tasks` to beads (a `pi-beads` fork).** Durable plan-step tracking (`executing-plans`, `subagent-driven-development`) now creates **persistent beads issues** per plan step (`beads_create`, `beads_update`, `beads_close`, `beads_dep`) — repo-owned, synced, auditable. Session phase bookkeeping (`brainstorming` checklist items; the "Planning"/"Implement"/"Verify" phase markers in `writing-plans`, `test-driven-development`, `verification-before-completion`) now uses **self-owned wisps** (`beads_create({ ..., ephemeral: true })`) created at phase start and closed at completion — ephemeral, excluded from sync, purged via `bd purge` once closed. `pi-tasks` is removed as a prerequisite; `pi-subagents` (`Agent` tool) is unaffected. **Requires** the forked pi-beads: upstream v0.2.2 lacks the `ephemeral` flag on `beads_create` that wisps depend on.
 - **Beads WIP visibility + guaranteed closure.** Phase wisps (`"Planning"`, `"Implement"`, `"Verify"`, brainstorming checklist items) are marked `in_progress` immediately after creation so the pi-beads widget shows what's being worked on (`◐`), closed on graceful exit (blocker/redirect/stop) as well as on completion, and the session's done wisps are purged at phase end via `bd mol wisp gc --closed --force` (wisp-only; persistent issues untouched). `using-superpowers` gains a Session Start rule reaping hard-kill leftovers via `bd mol wisp gc --dry-run` / `--age 24h --force` (a stopped/restarted session cannot close its own wisps). `executing-plans` / `subagent-driven-development` mark blocked plan-step tasks `blocked` instead of leaving them silently open, and re-mark them `in_progress` on resume. Uses stock `bd mol wisp gc` — no pi-beads fork change required; the widget's accumulated session done-panel is user-side.
-
+- **New molecule widget** (`extensions/beads-molecule-widget.ts`) renders the active
+  superpowers molecule's pipeline state (current phase, current/next step, pending
+  count) above the editor — shells out to `bd mol current --json` directly via
+  `pi.exec`, refreshed at session start and every turn (no polling).
 - **Renamed `agents/` → `agent-templates/`.** The 4 specialized roles (`implementer`, `worker`, `task-reviewer`, `code-reviewer`) are now copy-in templates, not auto-loaded agents. `pi-subagents` discovers custom agents from `.pi/agents/`, `.agents/agents/`, or `$PI_CODING_AGENT_DIR/agents/` — not from an installed package's own directory. Copy the templates into one of those locations to use them (see README Install). Frontmatter reformatted to the `pi-subagents` schema: `name:` dropped (type derived from filename), invalid `lsp` tool dropped.
 
 - **Skill files rewritten** to the new tools' real call shapes: `subagent({agent, task})` → `Agent({subagent_type, prompt, description})`; `plan_tracker({action, ...})` → `TaskCreate({...})` / `TaskUpdate({...})`. The `subagent-driven-development` fix loop now uses a real `resume: <agent_id>` parameter (rounds 1-3) instead of an unimplemented "resume this agent" instruction. No abstraction layer — skills show concrete call syntax (per the design spec's Decision 6).

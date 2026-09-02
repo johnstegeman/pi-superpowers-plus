@@ -18,6 +18,12 @@ There is **no fallback** if these packages aren't installed — skills reference
 
 - **Pass `ephemeral: true` to `beads_create` for wisps** (session phase bookkeeping — excluded from sync, purged via `bd purge` when closed); omit it for persistent issues (durable plan-step work).
 - **Repo routing:** omit `repo` on `beads_create` to target the session cwd's repo; from an umbrella root, pass the owning repo explicitly (`repo` is required there). Skills never hardcode a repo name.
+- **Structural workflow:** brainstorm → design → plan → implement → verify → finish is
+  modeled as a beads molecule poured from the bundled `superpowers-workflow` formula
+  (`bd cook`/`bd mol pour`), not tracked via ad hoc wisps. Skills advance it with bare
+  `bd` calls (`bd update --claim`, `bd close`, `bd gate resolve`, `bd ready --mol`) —
+  see `docs/superpowers/specs/2026-09-02-beads-as-persistence-layer-design.md` for the
+  full step graph.
 - `pi-beads` registers its own `beads` skill — see it for the full tool reference rather than re-documenting the API here.
 
 ## Skill prompt `location` attribute
