@@ -24,7 +24,6 @@ beads are created under.
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
 **Plan output:** dynamic task beads under the molecule's `implement` step (see "Creating Tasks as Beads" below) — no markdown plan file is written.
-- (User preferences for plan location override this default)
 
 ## Boundaries
 - Read code and docs: yes
