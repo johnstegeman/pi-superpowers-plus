@@ -166,6 +166,39 @@ type = "task"
 needs = ["smoke-test-approved"]
 ```
 
+**Gate loop mechanics (informed by a comparable prior-art review, see Decision 8):**
+each of the three human gates (`design-approved`, `spec-approved`, and the dynamically-
+created `plan-approved`) is not a fire-and-forget approve/reject signal — the skill
+explicitly supports a bounded revise-and-recheck loop:
+
+1. **Verdict lives in bead metadata, not just open/closed status.** After presenting a
+   design/spec/plan for review, the skill writes
+   `bd update <step-id> --set-metadata review.verdict=iterate` (user requested changes)
+   or `review.verdict=done` (approved) — status alone (`open`/`closed`) can't
+   distinguish "not reviewed yet" from "reviewed, needs changes," and a future reader
+   (a resumed session, the widget, a human inspecting `bd show`) needs that distinction
+   without replaying the conversation.
+2. **On `iterate`, the skill writes a revision summary before looping back** — a short,
+   specific note (via `bd comment <step-id> "..."` or
+   `--set-metadata review.revision_summary=...`) naming exactly which sections,
+   assumptions, or open questions caused the loopback. The skill then re-enters the
+   same conversational work (re-claim the step if it was left `in_progress`, or reopen
+   it) rather than treating "revise" as an unstructured do-over.
+3. **On resume (new session or after a gap), the skill reads prior content plus the
+   latest verdict/summary before continuing** — `bd show <step-id>` for the design/spec
+   content already written, plus the latest `review.revision_summary`, so earlier
+   answered questions, approach trade-offs, and approved sections are revised in
+   place, never silently discarded and restarted.
+4. **Only `review.verdict=done` permits closing the gate** (`bd gate resolve
+   <gate-id>` or `bd close <step-id>`, per whichever pattern applies) — `iterate`
+   always means "loop back," never "proceed anyway."
+
+This is a plain-`bd` pattern (no orchestration platform required) discovered by
+reviewing a separate, more mature prior-art implementation of the same beads-as-
+workflow idea (Decision 8) — it strengthens what was previously left as unstructured
+prose ("if the user requests changes, make them and re-run the review loop") into a
+durable, inspectable record of how many iterations happened and why.
+
 **Why the freeform loops (explore/clarify/approaches/design) aren't modeled as their own
 DAG nodes per turn:** brainstorming's "ask one question per turn, across as many turns as
 it takes" is inherently unbounded and conversational. The formula captures the phase
@@ -269,6 +302,13 @@ every real task bead depends on it (`bd dep add <task-N-id> <plan-approved-id>`)
 breakdown — mirroring today's "plan reviewed before execution starts" boundary, but as a
 real graph gate.
 
+**Self-review guard (from Decision 8's prior-art review):** before wiring tasks under
+`implement`, `writing-plans`' self-review must confirm no generated task duplicates a
+phase the formula already executes as its own step — a task titled "write the design
+doc" or "get plan approved," for instance, belongs to `write-spec`/`plan-approved`,
+not to `implement`. This mirrors a real bug class the prior-art review caught in its
+own plan-review lane.
+
 Plan-task descriptions are **write-once** at planning time (unlike specs, they are not
 built incrementally section-by-section across turns), so the overwrite-only nature of
 `bd update --description` is a non-issue: if a task's instructions need revising
@@ -353,6 +393,45 @@ without `.beads/` initialized cannot brainstorm or plan under this design — th
 markdown-file fallback path. This is a stronger dependency than today's design (which
 degrades gracefully to "no widget, but markdown still works"), and is an explicit,
 accepted tradeoff of moving structure into beads.
+
+### 8. Prior-art review: gascity-packs/superpowers
+
+During design, a comparable implementation was reviewed for anything worth adopting:
+[`gascity-packs/superpowers`](https://github.com/gastownhall/gascity-packs/tree/main/superpowers),
+which maps upstream Superpowers onto **Gas City**, a separate, much larger
+orchestration platform (own daemon, CLI, agent-session management, a richer
+`graph.v2` formula contract with convoys/drains/role-routed agents). That platform
+layer is not applicable here — a pi extension rides inside pi's own agent loop and has
+no equivalent orchestration surface to target — but three beads-level patterns
+(independent of Gas City's agent dispatch, expressible in plain `bd`) were adopted:
+
+1. **Verdict-in-metadata and the revise/recheck loop** (Decision 2's "Gate loop
+   mechanics" above) — their `[template.check]` steps poll a metadata field
+   (`design_review.verdict = done|iterate`) via a retry loop instead of a single
+   approve/reject gate, and their per-step prompts explicitly instruct writing a
+   revision summary on `iterate` and reading prior content back in on resume.
+2. **Plan self-review must reject lifecycle-duplicate tasks.** Their plan-review lane
+   explicitly rejects any generated task that re-implements a phase the formula
+   already executes (prepare/requirements/plan/decompose/review/finalize) —
+   translated here as: `writing-plans`' self-review (Decision 4) must check that no
+   dynamically-created task under `implement` duplicates a formula step the molecule
+   already covers (e.g., a task literally titled "write the spec" or "get plan
+   approved" belongs to `write-spec`/`plan-approved`, not to `implement`'s children).
+3. **Confirmation that formula-driven, bead-backed workflow modeling is not an
+   idiosyncratic choice** — a second, independently-built implementation converged on
+   the same core primitive (TOML step templates compiled into beads with `needs`
+   edges), and also kept per-step instructional content in markdown files referenced
+   from the formula rather than inlined, matching this design's own file-vs-bead split
+   (Decision 3).
+
+Not adopted: Gas City's agent routing/convoy/drain machinery (`gc.run_target`
+metadata, drain policies, session management) — out of scope for a pi extension;
+and the two-stage per-task review split (spec-compliance then code-quality as
+separate graph lanes) and parallel review-lane fan-out/fan-in, both of which are
+reasonable patterns but deliberately left as skill-internal prose behavior in this
+design (inside `verify`/`test-driven-development`) rather than promoted to graph
+structure — revisit if task-level review ever needs to be independently resumable or
+widget-visible.
 
 ## Scope
 
