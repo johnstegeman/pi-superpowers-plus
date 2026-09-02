@@ -30,6 +30,13 @@ only in a beads-initialized project: if the working directory has no
    a full day and not closed is abandoned; the default 1h threshold is too
    aggressive for resumed phases).
 4. This touches **wisps only** — persistent issues are never affected.
+5. Confirm the superpowers workflow formula is available in this project:
+   `bd formula list | grep superpowers-workflow`. If missing, copy it in from this
+   package's bundled copy (`formulas/superpowers-workflow.formula.toml` inside
+   the installed `pi-superpowers-plus` package directory) into the project's
+   `.beads/formulas/superpowers-workflow.formula.toml`, then re-run
+   `bd formula list` to confirm it's now visible. Never overwrite an existing formula
+   file of the same name — a user-customized formula takes precedence.
 
 ## Working Directory
 

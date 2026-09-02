@@ -123,7 +123,13 @@ Brainstorm → Plan → Execute → Verify → Review → Finish
 | **Review** | `/skill:requesting-code-review` | Dispatches a reviewer subagent to catch issues before merge |
 | **Finish** | `/skill:finishing-a-development-branch` | Presents merge/PR/keep/discard options and cleans up |
 
-Progress through the workflow is tracked with the beads tools (`beads_create`/`beads_update`/`beads_close`) as the agent works through each phase — durable plan-step work as persistent issues, session phase bookkeeping as wisps (`ephemeral: true`); the `pi-beads` widget renders in-progress issues above the editor.
+Progress through the workflow is tracked as a real beads molecule — a dependency graph
+poured from a formula, with human-approval gates as first-class nodes (design, spec, plan,
+and smoke-test sign-off) instead of prose instructions. Plan tasks are beads with their
+full instructions in the `description` field, not a separate markdown plan file; the spec
+document remains a markdown file, linked from its bead via `--spec-id` for traceability.
+This package's own molecule widget renders the active pipeline's current/next step above
+the editor.
 
 ### Supporting Skills
 
