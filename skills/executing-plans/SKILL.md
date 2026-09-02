@@ -65,6 +65,7 @@ After all tasks complete and verified — confirm with `bd ready --mol
 (`bd close <implement-step-id> --reason "all tasks complete"`), which unblocks `verify`.
 Claim `verify` (`bd update <verify-step-id> --claim`) and proceed to that work before the
 finishing-a-development-branch handoff below.
+
 - Announce: "I'm using the finishing-a-development-branch skill to complete this work."
 - **REQUIRED SUB-SKILL:** Use `/skill:finishing-a-development-branch`
 - Follow that skill to verify tests, present options, execute choice

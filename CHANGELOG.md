@@ -24,7 +24,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   superpowers molecule's pipeline state (current phase, current/next step, pending
   count) above the editor — shells out to `bd mol current --json` directly via
   `pi.exec`, refreshed at session start and every turn (no polling).
-
 - **Renamed `agents/` → `agent-templates/`.** The 4 specialized roles (`implementer`, `worker`, `task-reviewer`, `code-reviewer`) are now copy-in templates, not auto-loaded agents. `pi-subagents` discovers custom agents from `.pi/agents/`, `.agents/agents/`, or `$PI_CODING_AGENT_DIR/agents/` — not from an installed package's own directory. Copy the templates into one of those locations to use them (see README Install). Frontmatter reformatted to the `pi-subagents` schema: `name:` dropped (type derived from filename), invalid `lsp` tool dropped.
 
 - **Skill files rewritten** to the new tools' real call shapes: `subagent({agent, task})` → `Agent({subagent_type, prompt, description})`; `plan_tracker({action, ...})` → `TaskCreate({...})` / `TaskUpdate({...})`. The `subagent-driven-development` fix loop now uses a real `resume: <agent_id>` parameter (rounds 1-3) instead of an unimplemented "resume this agent" instruction. No abstraction layer — skills show concrete call syntax (per the design spec's Decision 6).
