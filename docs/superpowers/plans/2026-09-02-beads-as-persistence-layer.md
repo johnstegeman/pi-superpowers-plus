@@ -2,26 +2,24 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `/skill:subagent-driven-development` (recommended) or `/skill:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace superpowers-plus's markdown-file-only spec/plan tracking with a beads formula/molecule as the structural backbone of brainstorm → design → plan → implement → verify → finish, keeping spec prose in a diffable file, and ship a custom pi-beads widget that renders the active molecule's pipeline state.
+**Goal:** Replace superpowers-plus's markdown-file-only spec/plan tracking with a beads formula/molecule as the structural backbone of brainstorm → design → plan → implement → verify → finish, keeping spec prose in a diffable file, and ship a self-contained widget (in this package's own extension code) that renders the active molecule's pipeline state.
 
-**Architecture:** Two repos change. `pi-superpowers-plus` gets a new formula file plus rewrites to six `SKILL.md` files so they pour/query/advance the molecule via bare `bd` calls (no new tool wrappers needed — `beads_create` already supports `parent`/`description`/`type`; everything else runs as bash). `pi-beads` (in `pi-packages/packages/pi-beads`) gets a new molecule-aware widget module reusing the existing `widget-lines.mjs` rendering primitives, wired into the existing `session_start`/`agent_start`/`afterWrite` refresh hooks alongside (not replacing) the current WIP board.
+**Architecture:** Everything lives in `pi-superpowers-plus`. A new formula file plus rewrites to six `SKILL.md` files make skills pour/query/advance the molecule via bare `bd` calls (no new tool wrappers needed — `beads_create` already supports `parent`/`description`/`type`; everything else runs as bash). A new self-contained extension (`extensions/beads-molecule-widget.ts`, alongside the existing `extensions/set-phase.ts`) renders the active molecule's pipeline state above the editor by shelling out to `bd mol current --json` directly via `pi.exec` — no pi-beads changes, no second repo, no dependency on code outside this package's own release cycle.
 
-**Tech Stack:** Markdown skill editing + one TOML formula file (`pi-superpowers-plus`); TypeScript + plain-JS rendering module, Node's built-in test runner via `node --test` (`pi-beads`, matching its existing `widget-lines.test.mjs` convention).
+**Tech Stack:** Markdown skill editing + one TOML formula file + one new TypeScript extension file, tested with a plain-JS pure-render module (no framework — matches the existing `extensions/set-phase.ts` style).
 
 **Design spec:** `docs/superpowers/specs/2026-09-02-beads-as-persistence-layer-design.md`
 
 ## Global Constraints
 
-- **Two repo roots, referenced explicitly per task:**
-  - `pi-superpowers-plus` — this workspace (`docs/`, `skills/`, `README.md`, `CHANGELOG.md`).
-  - `pi-beads` — `/Users/jstegeman/Projects/_ai/pi-packages/packages/pi-beads` (`src/index.ts`, `src/widget-lines.mjs`, `src/widget-lines.test.mjs`).
-- **No new pi-beads tool wrappers for molecule operations.** `bd cook`, `bd mol pour`, `bd dep add --type <x>`, `bd ready --mol`, `bd mol current` are invoked as bare `bd` shell commands from skill instructions — the same pattern `writing-plans`/`brainstorming` already use for `bd mol wisp gc`. Only `beads_create`/`beads_update`/`beads_close`/`beads_dep` (existing tools) are used where they already cover the need (e.g. creating dynamic task children under `implement` via `beads_create({ parent, description, type })`).
+- **Single repo root.** Everything in this plan is `pi-superpowers-plus` (`docs/`, `skills/`, `extensions/`, `README.md`, `CHANGELOG.md`) — no other package is modified.
+- **No new tool wrappers for molecule operations.** `bd cook`, `bd mol pour`, `bd dep add --type <x>`, `bd ready --mol`, `bd mol current` are invoked as bare `bd` shell commands from skill instructions (via the agent's own `bash` tool) or via `pi.exec` from the new widget extension — the same pattern `writing-plans`/`brainstorming` already use for `bd mol wisp gc`. Only `beads_create`/`beads_update`/`beads_close`/`beads_dep` (tools from whatever beads tool package is installed, e.g. pi-beads) are used from skills where they already cover the need (e.g. creating dynamic task children under `implement` via `beads_create({ parent, description, type })`).
 - **Formula step ids are fixed** and used verbatim in every skill reference: `explore`, `clarify`, `approaches`, `design`, `design-approved`, `write-spec`, `spec-review`, `spec-approved`, `implement`, `verify`, `smoke-test-approved`, `finish`. Skills reference these ids, never re-derive or rename them.
 - **`implement` and `verify` are `type = "task"` in the formula, never `type = "epic"`** — beads disallows `blocks`-type edges crossing the epic/task type boundary in either direction (validated in the design spec); a task-typed step with children is still a valid molecule for `bd mol show`/`bd ready --mol`.
 - **Spec content stays a file.** No task in this plan writes spec prose into a bead field. The `write-spec` bead's role is linkage only (`bd update <id> --spec-id <path>`).
 - **Plan-task descriptions are write-once.** No `appendDescription` tool support is added or required anywhere in this plan (see design spec Decision 3/4).
-- **Quality gates:** `pi-superpowers-plus` — `npx biome check .` (markdown/TOML excluded per `biome.json`, so this is a trivial gate; the real check is the grep fences and manual `bd cook --dry-run` verification specified per task). `pi-beads` — `node --test src/widget-lines.test.mjs` plus `npx tsc --noEmit` if the package has a build step (verify in Task 8).
-- **Existing widget behavior is preserved.** The new molecule widget is an **additional** widget key (`beads-mol`), rendered alongside the existing `beads-wip` board, not a replacement of it in the shared pi-beads codebase — other (non-superpowers) consumers of pi-beads still see the flat WIP board. Superpowers-specific skills are the only thing that populates molecule state.
+- **Quality gates:** `npx biome check .` (biome covers `extensions/*.ts`; markdown/TOML are excluded per `biome.json`, so for those the real check is the grep fences and manual `bd cook --dry-run` verification specified per task) plus `node --test extensions/beads-molecule-widget.test.mjs` for the new render module.
+- **The widget is self-contained.** It registers under its own widget key (`beads-mol`) via `ctx.ui.setWidget` from this package's own extension code — it does not depend on, modify, or coordinate with any other installed package's widget (a parallel effort is removing the old generic pi-beads widget entirely, which this plan neither depends on nor is blocked by).
 
 ---
 
@@ -584,8 +582,8 @@ poured from a formula, with human-approval gates as first-class nodes (design, s
 and smoke-test sign-off) instead of prose instructions. Plan tasks are beads with their
 full instructions in the `description` field, not a separate markdown plan file; the spec
 document remains a markdown file, linked from its bead via `--spec-id` for traceability.
-The `pi-beads` molecule widget renders the active pipeline's current/next step above the
-editor.
+This package's own molecule widget renders the active pipeline's current/next step above
+the editor.
 ```
 
 - [ ] **Step 4: Add CHANGELOG entry**
@@ -618,23 +616,23 @@ git commit -m "docs: describe the beads-molecule workflow and formula bootstrap"
 
 ---
 
-### Task 8: pi-beads — molecule state fetch + pure render function
+### Task 8: molecule widget — pure state fetch + render function
 
 **Files:**
-- Create: `src/molecule-widget.mjs` (in `pi-beads`)
-- Create: `src/molecule-widget.test.mjs` (in `pi-beads`)
+- Create: `extensions/beads-molecule-widget.mjs` (pure parser + render function, plain JS so it's trivially unit-testable without a TS build step)
+- Create: `extensions/beads-molecule-widget.test.mjs`
 
 **Interfaces:**
-- Consumes: `bd mol current --for <actor> --json` output shape (documented below).
-- Produces: `moleculeWidgetLines(state, width, theme)` — a pure render function, and `parseMoleculeCurrent(json)` — a pure parser, both consumed by Task 9's wiring into `src/index.ts`.
+- Consumes: `bd mol current --json` output shape (documented inline below).
+- Produces: `parseMoleculeCurrent(json)` and `moleculeWidgetLines(state, width, theme)`, consumed by Task 9's `extensions/beads-molecule-widget.ts`.
 
-- [ ] **Step 1: Write the failing test for the parser**
+- [ ] **Step 1: Write the failing test**
 
-Create `src/molecule-widget.test.mjs`:
+Create `extensions/beads-molecule-widget.test.mjs`:
 
 ```js
 import assert from "node:assert/strict";
-import { parseMoleculeCurrent, moleculeWidgetLines } from "./molecule-widget.mjs";
+import { parseMoleculeCurrent, moleculeWidgetLines } from "./beads-molecule-widget.mjs";
 
 // ---------- parser: malformed input never throws ----------
 assert.deepEqual(parseMoleculeCurrent(""), null);
@@ -700,24 +698,77 @@ const explorePhase = {
 };
 assert.ok(moleculeWidgetLines(explorePhase, 80)[0].includes("Brainstorming"));
 
-console.log("molecule-widget: all assertions passed");
+console.log("beads-molecule-widget: all assertions passed");
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node --test src/molecule-widget.test.mjs`
-Expected: FAIL — `Cannot find module './molecule-widget.mjs'`.
+Run: `node --test extensions/beads-molecule-widget.test.mjs`
+Expected: FAIL — `Cannot find module './beads-molecule-widget.mjs'`.
 
 - [ ] **Step 3: Implement the parser and render function**
 
-Create `src/molecule-widget.mjs`:
+Create `extensions/beads-molecule-widget.mjs`:
 
 ```js
 /**
  * Pure parsing + rendering for the superpowers molecule widget.
- * Kept in plain JS (no TS), mirroring widget-lines.mjs's convention.
+ * Plain JS (no TS) so it's directly runnable/testable by node.
  */
-import { assemble, truncToWidth, displayWidth, formatAge } from "./widget-lines.mjs";
+
+// ---- minimal display-width + truncation + paint-after-cut helpers ----
+// (self-contained here rather than depending on another package's internals;
+// the width-safety rule is: measure the plain-text twin, only paint fragments
+// after they've already been cut to width.)
+function charWidth(cp) {
+  if (cp === 0x200d) return 0;
+  if ((cp >= 0x0300 && cp <= 0x036f) || (cp >= 0xfe00 && cp <= 0xfe0f)) return 0;
+  if ((cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0x1f300 && cp <= 0x1f9ff)) return 2;
+  return 1;
+}
+export function displayWidth(s) {
+  let w = 0;
+  for (const ch of String(s)) w += charWidth(ch.codePointAt(0));
+  return w;
+}
+export function truncToWidth(s, width) {
+  s = String(s);
+  if (width <= 0) return "";
+  if (displayWidth(s) <= width) return s;
+  const budget = width - 1;
+  let out = "";
+  let w = 0;
+  for (const ch of s) {
+    const cw = charWidth(ch.codePointAt(0));
+    if (w + cw > budget) break;
+    out += ch;
+    w += cw;
+  }
+  return out + "\u2026";
+}
+function assemble(frags, width) {
+  let used = 0;
+  let text = "";
+  for (const f of frags) {
+    if (!f.text) continue;
+    if (used >= width) break;
+    const piece = truncToWidth(f.text, width - used);
+    if (!piece) break;
+    text += f.paint ? f.paint(piece) : piece;
+    used += displayWidth(piece);
+  }
+  return { text, width: used };
+}
+export function formatAge(startedAt, now = Date.now()) {
+  const t = Date.parse(startedAt ?? "");
+  if (!Number.isFinite(t)) return "";
+  const min = Math.floor((now - t) / 60000);
+  if (!Number.isFinite(min) || min < 0) return "";
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 const PHASE_MAP = {
   explore: "Brainstorming",
@@ -733,7 +784,6 @@ const PHASE_MAP = {
   "smoke-test-approved": "Verifying",
   finish: "Finishing",
 };
-
 function phaseOf(step) {
   if (!step) return "Working";
   return PHASE_MAP[step.formula_step_id] ?? "Implementing";
@@ -762,15 +812,14 @@ export function parseMoleculeCurrent(json) {
   };
 }
 
-const PLAIN = { fg: (_c, t) => t };
+const PLAIN_FG = (_c, t) => t;
 function themeOf(theme) {
-  const fg = theme && typeof theme.fg === "function" ? (c, t) => theme.fg(c, t) : PLAIN.fg;
-  return { fg };
+  return theme && typeof theme.fg === "function" ? (c, t) => theme.fg(c, t) : PLAIN_FG;
 }
 
 /** Render the molecule widget. Returns [] when there's nothing to draw. */
 export function moleculeWidgetLines(state, width, theme) {
-  const { fg } = themeOf(theme);
+  const fg = themeOf(theme);
   if (!state || !Array.isArray(state.steps) || state.steps.length === 0 || !(width > 0))
     return [];
 
@@ -825,64 +874,62 @@ export function moleculeWidgetLines(state, width, theme) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node --test src/molecule-widget.test.mjs`
+Run: `node --test extensions/beads-molecule-widget.test.mjs`
 Expected: PASS, all assertions succeed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/molecule-widget.mjs src/molecule-widget.test.mjs
+git add extensions/beads-molecule-widget.mjs extensions/beads-molecule-widget.test.mjs
 git commit -m "feat: molecule widget parser + pure render function"
 ```
 
 ---
 
-### Task 9: pi-beads — wire the molecule widget into refresh hooks
+### Task 9: molecule widget — extension registration + refresh hooks
 
 **Files:**
-- Modify: `src/index.ts` (imports near line 33; new module-level state near the existing `wip`/`todo`/`done` maps at lines 77-85; new `refreshMolecule()`/`renderMol()` functions alongside `refreshReady()`/`renderWip()` at lines 399-479; hook calls in `session_start` line 527, `agent_start` line 556, and `afterWrite()` line 219)
+- Create: `extensions/beads-molecule-widget.ts`
+- Modify: `package.json` (`pi.extensions` array, if it lists files individually rather than the directory)
 
 **Interfaces:**
 - Consumes: `parseMoleculeCurrent`, `moleculeWidgetLines` from Task 8.
-- Produces: a second widget key (`beads-mol`) rendered alongside the existing `beads-wip` board.
+- Produces: none (terminal consumer — the registered extension itself).
 
-- [ ] **Step 1: Import the new module**
+- [ ] **Step 1: Write the extension file**
 
-At `src/index.ts:33`, alongside the existing import, add:
-
-```ts
-import { parseMoleculeCurrent, moleculeWidgetLines } from "./molecule-widget.mjs";
-```
-
-- [ ] **Step 2: Add module-level state for the active molecule**
-
-Near the existing `const wip = new Map<string, WipEntry>();` (line 77), add:
+Create `extensions/beads-molecule-widget.ts`, modeled directly on the existing
+`extensions/set-phase.ts` in this same directory for style (default-export factory,
+`ExtensionAPI` type import) but registering event hooks instead of a tool:
 
 ```ts
-let activeMolecule: ReturnType<typeof parseMoleculeCurrent> | null = null;
-```
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { parseMoleculeCurrent, moleculeWidgetLines } from "./beads-molecule-widget.mjs";
 
-- [ ] **Step 3: Add `refreshMolecule()` and `renderMol()`**
+export default function (pi: ExtensionAPI) {
+  let uiRef: any = null;
+  let activeMolecule: ReturnType<typeof parseMoleculeCurrent> | null = null;
 
-Immediately after the existing `refreshDone()` function (ending at line 479), add:
-
-```ts
-  // molecule widget: no timers, refreshed at session_start, every agent_start, and
-  // after any write — same discipline as refreshReady()/refreshDone() above.
-  async function refreshMolecule(): Promise<void> {
-    const r = await bd(["mol", "current", "--json"], activeCwd ?? umbrella);
-    if (!r.ok) {
-      activeMolecule = null;
+  // No timers, ever: refreshed at session_start and every agent_start. Skills run bare
+  // `bd cook`/`bd mol pour`/`bd dep add`/`bd create --parent` outside any tool call this
+  // extension could hook, so a per-turn safety-net read is required, not optional.
+  async function refreshMolecule(cwd: string): Promise<void> {
+    const r = await pi.exec("bd", ["mol", "current", "--json"], {
+      cwd,
+      timeout: 5000,
+    });
+    if (!r || r.code !== 0) {
+      // only clear on a clean "no active molecule" signal, never on a transient
+      // failure — an unreachable `bd` binary should not blank a widget that was
+      // showing real progress a moment ago.
+      if (r && /no active molecule|not found/i.test(r.stderr ?? "")) activeMolecule = null;
       return;
     }
-    const parsed = parseMoleculeCurrent(r.out);
-    // only replace on a successful parse; a transient bd hiccup keeps the last-known
-    // state rather than blanking the widget for one turn
+    const parsed = parseMoleculeCurrent(r.stdout);
     if (parsed) activeMolecule = parsed;
-    else if (!/superpowers-workflow|molecule/i.test(r.out)) activeMolecule = null;
   }
 
-  function renderMol() {
+  function renderMolecule() {
     try {
       if (!uiRef?.setWidget) return;
       if (!activeMolecule) {
@@ -901,117 +948,80 @@ Immediately after the existing `refreshDone()` function (ending at line 479), ad
         { placement: "aboveEditor" },
       );
     } catch {
-      /* ui may be unavailable — never fatal */
+      /* ui may be unavailable in non-interactive runs — never fatal */
     }
   }
-```
 
-- [ ] **Step 4: Wire into `session_start`**
-
-At `src/index.ts:535` (inside the `if (beadsReady)` branch of `session_start`), change:
-
-```ts
-        void Promise.allSettled([loadWip(), refreshReady(), refreshDone()]).then(
-          () => renderWip(),
-          () => {
-            /* bd missing/broken -> widget just stays empty */
-          },
-        );
-```
-
-to:
-
-```ts
-        void Promise.allSettled([
-          loadWip(),
-          refreshReady(),
-          refreshDone(),
-          refreshMolecule(),
-        ]).then(
-          () => {
-            renderWip();
-            renderMol();
-          },
-          () => {
-            /* bd missing/broken -> widgets just stay empty */
-          },
-        );
-```
-
-- [ ] **Step 5: Wire into `agent_start`**
-
-At `src/index.ts:556`, change the existing `agent_start` handler body from:
-
-```ts
-  pi.on("agent_start", async () => {
-    if (!beadsReady) return;
-    void refreshDone().then(() => renderWip(), () => {});
-  });
-```
-
-to:
-
-```ts
-  pi.on("agent_start", async () => {
-    if (!beadsReady) return;
-    void refreshDone().then(() => renderWip(), () => {});
-    void refreshMolecule().then(() => renderMol(), () => {});
-  });
-```
-
-- [ ] **Step 6: Wire into `afterWrite()`**
-
-At `src/index.ts:219`, change:
-
-```ts
-  async function afterWrite(repoDir: string): Promise<void> {
-    void Promise.allSettled([refreshReady(), refreshDone()]).then(
-      () => renderWip(),
-      () => {},
-    );
-```
-
-to:
-
-```ts
-  async function afterWrite(repoDir: string): Promise<void> {
-    void Promise.allSettled([refreshReady(), refreshDone(), refreshMolecule()]).then(
+  pi.on("session_start", async (_event: any, ctx: any) => {
+    uiRef = ctx?.ui ?? null;
+    const cwd = ctx?.cwd ?? process.cwd();
+    void refreshMolecule(cwd).then(
+      () => renderMolecule(),
       () => {
-        renderWip();
-        renderMol();
+        /* bd missing/broken -> widget just stays empty */
       },
+    );
+  });
+
+  pi.on("agent_start", async (_event: any, ctx: any) => {
+    const cwd = ctx?.cwd ?? process.cwd();
+    void refreshMolecule(cwd).then(
+      () => renderMolecule(),
       () => {},
     );
+  });
+}
 ```
 
-- [ ] **Step 7: Verify with a manual smoke test**
+- [ ] **Step 2: Confirm the extension is picked up by the package's extension loader**
 
-In a scratch project with the formula from Task 1 poured:
+```bash
+grep -A3 '"extensions"' package.json
+```
+
+Expected: `"extensions": ["./extensions"]` — a directory reference, meaning pi's loader
+picks up every extension file in that directory automatically and no `package.json`
+change is needed. If the loader instead lists files individually, add
+`"./extensions/beads-molecule-widget.ts"` alongside the existing
+`"./extensions/set-phase.ts"` entry.
+
+- [ ] **Step 3: Manual smoke test**
+
+In a scratch project with the formula from Task 1 poured and a step claimed:
 
 ```bash
 cd /tmp/formula-check
-bd update beadstest-mol-meq --claim  # or whatever the explore step id is
+bd update <explore-step-id> --claim
 ```
 
-Start a pi session in that directory with the locally-built `pi-beads` loaded; confirm
-the `beads-mol` widget renders above the editor showing "Brainstorming · superpowers-workflow ·
-0/N" and the claimed step. Close the step and confirm the widget's done count increments
-on the next turn without any manual refresh action.
+Start a pi session in that directory with this package installed; confirm the
+`beads-mol` widget renders above the editor showing "Brainstorming · superpowers-workflow ·
+0/N" and the claimed step's title. Close the step and start a new turn; confirm the
+widget's progress count updates without any manual refresh action, and that closing the
+molecule's last step causes the widget to clear.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 4: Verify**
 
 ```bash
-git add src/index.ts
-git commit -m "feat: wire molecule widget into session_start/agent_start/afterWrite"
+npx biome check extensions/
+node --test extensions/beads-molecule-widget.test.mjs
+```
+Expected: both pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add extensions/beads-molecule-widget.ts package.json
+git commit -m "feat: register the molecule widget extension"
 ```
 
 ---
 
-### Task 10: pi-beads — package version bump + changelog
+### Task 10: CHANGELOG + version bump
 
 **Files:**
 - Modify: `package.json` (version field)
-- Modify: `README.md` (widget section, if present, describing `beads-wip`)
+- Modify: `CHANGELOG.md`
 
 **Interfaces:**
 - Consumes: none.
@@ -1019,46 +1029,51 @@ git commit -m "feat: wire molecule widget into session_start/agent_start/afterWr
 
 - [ ] **Step 1: Bump the package version**
 
-In `package.json`, bump `"version": "0.2.2"` to `"0.3.0"` (minor bump — new widget
-surface, no breaking change to existing `beads_*` tool signatures).
+Check the current version and bump the minor: `grep '"version"' package.json` (this
+plan does not hardcode the current value since Tasks 1-7 may land first and change it) —
+increment the minor component (new widget surface, no breaking change to any existing
+skill-facing interface).
 
-- [ ] **Step 2: Document the new widget in README**
+- [ ] **Step 2: Add CHANGELOG entry for the widget**
 
-Add a short paragraph after any existing description of the `beads-wip` widget:
+In `CHANGELOG.md`, under `## [Unreleased]`, add to the `### Changed` bullet from Task 7
+Step 4 (or as a new adjacent bullet if that entry already landed and is no longer
+`[Unreleased]`):
 
 ```markdown
-A second widget, `beads-mol`, renders the active superpowers molecule (poured from the
-`superpowers-workflow` formula) as a single pipeline: current phase, current/next step,
-and a collapsed pending count. It appears independently of the WIP board above and clears
-automatically once no molecule is active for the session.
+- **New molecule widget** (`extensions/beads-molecule-widget.ts`) renders the active
+  superpowers molecule's pipeline state (current phase, current/next step, pending
+  count) above the editor — shells out to `bd mol current --json` directly via
+  `pi.exec`, refreshed at session start and every turn (no polling).
 ```
 
 - [ ] **Step 3: Verify**
 
 ```bash
-node --test src/widget-lines.test.mjs src/molecule-widget.test.mjs
+npx biome check .
+node --test extensions/beads-molecule-widget.test.mjs
 ```
-Expected: both test files pass.
+Expected: both pass.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add package.json README.md
-git commit -m "chore: bump to 0.3.0 for the molecule widget"
+git add package.json CHANGELOG.md
+git commit -m "chore: version bump for the molecule widget"
 ```
 
 ---
 
 ## Verification
 
-- **`pi-superpowers-plus`:** `npx biome check .` passes; grep fences in Tasks 2-7's
-  verify steps all return empty/expected output; `bd cook superpowers-workflow --dry-run`
-  and `bd mol pour` succeed against the formula from Task 1 (re-verify after any skill
+- **Formula + skills:** `npx biome check .` passes; grep fences in Tasks 2-7's verify
+  steps all return empty/expected output; `bd cook superpowers-workflow --dry-run` and
+  `bd mol pour` succeed against the formula from Task 1 (re-verify after any skill
   wording changes, since the formula file itself doesn't change after Task 1).
-- **`pi-beads`:** `node --test src/widget-lines.test.mjs src/molecule-widget.test.mjs`
-  passes; manual smoke test from Task 9 Step 7 confirms the widget renders and updates
-  live in a real pi session.
+- **Widget:** `node --test extensions/beads-molecule-widget.test.mjs` passes; manual
+  smoke test from Task 9 Step 3 confirms the widget renders and updates live in a real
+  pi session, with no dependency on any other installed package.
 - **End-to-end (manual, not automated by this plan):** run a full brainstorm → design →
-  plan → implement → verify → finish cycle in a scratch project with both changed
-  packages installed, confirming every gate actually blocks progress until resolved and
-  the widget tracks the pipeline correctly throughout.
+  plan → implement → verify → finish cycle in a scratch project with this package
+  installed, confirming every gate actually blocks progress until resolved and the
+  widget tracks the pipeline correctly throughout.
