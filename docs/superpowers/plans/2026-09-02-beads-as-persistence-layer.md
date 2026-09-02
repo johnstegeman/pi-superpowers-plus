@@ -550,6 +550,17 @@ committed), close that task bead per `executing-plans` Step 2 — this skill doe
 its own close step.
 ```
 
+Also replace the now-orphaned graceful-exit line right after it, which still references
+the old wisp model ("If the cycle does not complete for any reason (blocked, redirected,
+stopped early), close the implement wisp you created..."), with:
+
+```markdown
+If the cycle does not complete for any reason (blocked, redirected, stopped early), do
+not close the task bead — leave it `in_progress` (or mark it `blocked` via `bd update
+<task-id> --status blocked` with a `bd comment` explaining why) for `executing-plans` to
+resume, per its own blocked-task guidance.
+```
+
 - [ ] **Step 2: Rewrite `verification-before-completion`'s phase-tracking line**
 
 Replace the line beginning "When verification begins, create a wisp..." with:
@@ -570,6 +581,11 @@ human to actually run/confirm the smoke test before resolving it
 resolving it yourself. Once resolved, claim and work `finish`
 (`bd update <finish-step-id> --claim`), handing off to
 `/skill:finishing-a-development-branch` as today.
+
+If verification does not complete for any reason (blocked, redirected, stopped early),
+do not close the `verify` step — leave it `in_progress` for the next session to resume,
+or mark it `blocked` (`bd update <verify-step-id> --status blocked` with a `bd comment`
+explaining why) if you're certain it can't proceed as-is.
 ```
 
 - [ ] **Step 3: Verify**
