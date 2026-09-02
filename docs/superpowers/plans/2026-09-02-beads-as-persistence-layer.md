@@ -500,8 +500,8 @@ no `TaskCreate`-equivalent step is needed here; `writing-plans` already created 
 
 - [ ] **Step 2: Rewrite the task-loop completion line**
 
-Replace the line "Then mark the task complete via `TaskUpdate({ taskId: <id>, status:
-"completed" })` and move on. Never" with:
+Replace the line "Then close the task via `beads_close({ ids: "<id>" })` and move on.
+Never" with:
 
 ```markdown
 Then close the task bead (`bd close <task-id> --reason "<summary>"`) and move on. Never
@@ -558,8 +558,9 @@ Replace the line beginning "When verification begins, create a wisp..." with:
 When verification begins, claim the molecule's `verify` step: `bd update <verify-step-id> --claim`.
 ```
 
-Replace the line beginning "When all verification passes, mark the verify phase
-complete..." with:
+Replace the line beginning "When all verification passes, close the verify wisp you
+created..." (and the adjacent "If verification does not complete for any reason..."
+graceful-exit line right after it) with:
 
 ```markdown
 When all verification passes, close the `verify` step (`bd close <verify-step-id>
