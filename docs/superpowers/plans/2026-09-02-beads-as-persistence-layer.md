@@ -217,19 +217,36 @@ Transition to implementation) as prose — they map onto `write-spec`/`spec-revi
 `spec-approved`/`implement`, handled by Step 3 below and by Task 3's rewrite of
 `writing-plans`.
 
-- [ ] **Step 3: Rewrite "After the Design" to close the design-approved gate, not a wisp batch**
+- [ ] **Step 3: Rewrite "After the Design" as a verdict-driven revise/recheck loop, not a one-shot gate resolve**
 
 Replace the current line beginning "Mark the brainstorm phase complete: close any
 checklist wisps..." with:
 
 ```markdown
-- Once the user approves the design, resolve the gate so `write-spec` becomes ready:
-  `bd gate resolve <design-approved-gate-id>` (find the gate id via
-  `bd mol current <root-id> --json` — it's the `next_step` when `design` is closed and
-  the gate hasn't resolved yet). If brainstorming stops early for any reason (blocked,
-  redirected, session stopped), leave the current step's status as-is (open or
-  in_progress) for the next session to resume — do not close steps whose real output
-  doesn't exist yet.
+- After presenting the design, record the verdict on the `design-approved` step so a
+  resumed session or the widget can see it without replaying the conversation:
+  - Approved: `bd update <design-approved-id> --set-metadata review.verdict=done`,
+    then resolve the gate so `write-spec` becomes ready:
+    `bd gate resolve <design-approved-gate-id>` (find the gate id via
+    `bd mol current <root-id> --json` — it's the `next_step` when `design` is closed
+    and the gate hasn't resolved yet).
+  - Changes requested: `bd update <design-approved-id> --set-metadata
+    review.verdict=iterate`, then write a specific revision summary naming exactly
+    which sections/assumptions/questions need another pass:
+    `bd comment <design-approved-id> "<what needs to change>"`. Re-claim `design`
+    (`bd update <design-step-id> --claim`) and loop back into Step 2's design-
+    presentation work — do NOT resolve the gate. Never treat "changes requested" as
+    an unstructured do-over: the revision summary is what the next pass reads before
+    touching the design again.
+  - On resume (new session, or picking this back up after a gap): read the design
+    content already written (`bd show <design-step-id>`) plus the latest verdict and
+    revision summary (`bd show <design-approved-id>`) before continuing — revise the
+    existing design in place; never discard earlier answered questions, approach
+    trade-offs, or already-approved sections.
+  - Only `review.verdict=done` permits resolving the gate. If brainstorming stops
+    early for any reason (blocked, redirected, session stopped) before a verdict is
+    recorded, leave the current step's status as-is (open or in_progress) for the next
+    session to resume — do not close steps whose real output doesn't exist yet.
 ```
 
 - [ ] **Step 4: Verify**
@@ -268,7 +285,21 @@ poured: `bd update <implement-step-id> --claim`. This is the container all real 
 beads are created under.
 ```
 
-- [ ] **Step 2: Add the plan-approved gate + dynamic task creation to Task Structure**
+- [ ] **Step 2: Add a self-review guard against lifecycle-duplicate tasks**
+
+Add this to the plan document's existing Self-Review section (the checklist run before
+tasks are wired into beads), as a new numbered item:
+
+```markdown
+5. **Lifecycle-duplicate check:** Does any task in this plan re-implement a phase the
+   molecule already executes as its own formula step — e.g. a task titled "write the
+   design doc," "get the spec approved," or "get the plan approved"? Those belong to
+   `write-spec`/`spec-approved`/`plan-approved`, not to a task under `implement`. Any
+   task that duplicates formula-owned work is a plan bug: remove it before wiring tasks
+   into beads in Step 3 below.
+```
+
+- [ ] **Step 3: Add the plan-approved gate + dynamic task creation to Task Structure**
 
 After the "## Task Structure" section's closing code fence (before "## Task
 Separation"), add:
@@ -276,8 +307,9 @@ Separation"), add:
 ```markdown
 ## Creating Tasks as Beads
 
-Once the task breakdown above is written out in the plan document, mirror it into real
-beads under the `implement` step:
+Once the task breakdown above is written out in the plan document and has passed the
+lifecycle-duplicate check (Self-Review item 5), mirror it into real beads under the
+`implement` step:
 
 ```bash
 # One gate, every real task depends on it — nothing executes until the human approves
@@ -299,9 +331,22 @@ Each task bead's `-d`/`--description` is the task's **entire** body from the pla
 document — every step, every code block, exactly as written. This bead is what
 `executing-plans`/`subagent-driven-development` read during execution; the plan.md
 document itself is no longer read at execution time (see Task 4/5).
+
+**Recording the plan-approval verdict** (same revise/recheck pattern as brainstorming's
+`design-approved`/`spec-approved` gates, Task 2 Step 3): when presenting the plan for
+review, don't just wait silently on the gate.
+- Approved: `bd update $GATE_ID --set-metadata review.verdict=done`, then
+  `bd gate resolve <the-gate-id-bd-gate-create-returned>`.
+- Changes requested: `bd update $GATE_ID --set-metadata review.verdict=iterate`, write
+  a specific revision summary (`bd comment $GATE_ID "<what needs to change>"`), revise
+  the affected task beads' descriptions in place (`bd update <task-id> --description
+  "<revised instructions>"`) or add/remove/re-order task beads as needed, and re-present
+  — do NOT resolve the gate. On resume, read the existing task beads under `implement`
+  (`bd mol show <implement-step-id>`) plus the latest revision summary before revising,
+  rather than starting the breakdown over.
 ```
 
-- [ ] **Step 3: Rewrite Execution Handoff to close the gate-wiring work, not a wisp**
+- [ ] **Step 4: Rewrite Execution Handoff to close the gate-wiring work, not a wisp**
 
 Replace the two "close the planning wisp..." lines (188 and the graceful-exit variant)
 with:
@@ -317,24 +362,25 @@ If planning stops early for any reason (blocked, redirected, session stopped), l
 reading `bd mol show <implement-step-id>` to see what's already wired.
 ```
 
-- [ ] **Step 4: Update the execution-handoff prose to point at the molecule, not a filename**
+- [ ] **Step 5: Update the execution-handoff prose to point at the molecule, not a filename**
 
 Replace the "Plan complete and saved to `docs/superpowers/plans/<filename>.md`" handoff
 message with:
 
 ```markdown
 **"Plan complete — <N> tasks created under `<implement-step-id>`, gated by
-`<plan-approved-gate-id>`. Resolve the gate when ready (`bd gate resolve
-<plan-approved-gate-id>`) to unblock execution. Two execution options:**
+`<plan-approved-gate-id>`. Once you approve, I'll record `review.verdict=done` and
+resolve the gate to unblock execution (see Step 3's verdict recording). Two execution
+options:**
 ```
 
-- [ ] **Step 5: Verify**
+- [ ] **Step 6: Verify**
 
 Run: `grep -n "docs/superpowers/plans\|ephemeral" skills/writing-plans/SKILL.md`
 Expected: no remaining references to writing a plan markdown file or creating a wisp —
-only the bead-creation commands from Step 2 and the molecule-based handoff from Step 4.
+only the bead-creation commands from Step 3 and the molecule-based handoff from Step 5.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add skills/writing-plans/SKILL.md
