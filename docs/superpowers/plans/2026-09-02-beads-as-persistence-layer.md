@@ -308,7 +308,7 @@ Separation"), add:
 ## Creating Tasks as Beads
 
 Once the task breakdown above is written out in the plan document and has passed the
-lifecycle-duplicate check (Self-Review item 5), mirror it into real beads under the
+lifecycle-duplicate check (Self-Review item 4), mirror it into real beads under the
 `implement` step:
 
 ```bash
@@ -352,10 +352,19 @@ Replace the two "close the planning wisp..." lines (188 and the graceful-exit va
 with:
 
 ```markdown
-After the task beads and `plan-approved` gate are created and wired, close the
-`implement` step's own claim is left open — it stays `in_progress`, representing the
+After the task beads and `plan-approved` gate are created and wired, the `implement`
+step's own claim is left open on purpose — it stays `in_progress`, representing the
 whole implementation phase, until every task bead under it closes (see `executing-plans`
-Step 5). Nothing further to close here; the plan is now the bead graph itself.
+Step 3, "Rewrite Complete Development"). Nothing further to close here; the plan is now
+the bead graph itself.
+
+Also update the two now-stale plan-file references elsewhere in this skill so nothing
+contradicts the "plan.md is retired" design: replace line 26's
+`**Save plans to:** \`docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md\`` with
+`**Plan output:** dynamic task beads under the molecule's \`implement\` step (see
+"Creating Tasks as Beads" below) — no markdown plan file is written.`, and replace the
+Boundaries line `- Write to docs/superpowers/plans/: yes` with
+`- Write to docs/superpowers/plans/: no (plan output is beads, not a file)`.
 
 If planning stops early for any reason (blocked, redirected, session stopped), leave
 `implement` and any partially-created task beads as-is — the next session resumes by
