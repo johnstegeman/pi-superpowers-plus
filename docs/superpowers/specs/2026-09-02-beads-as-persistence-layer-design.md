@@ -71,9 +71,20 @@ across origin types (feature vs. bug vs. plain task).
 
 ### 2. Formula shape
 
-One TOML file, `.beads/formulas/superpowers-workflow.formula.toml`. The extension writes
-this file into a project's `.beads/formulas/` on first use if it doesn't already exist —
-no manual setup step for the user.
+One TOML file, shipped at the package root as `formulas/superpowers-workflow.formula.toml`
+(added to `package.json`'s `files` array so it's included in the published package —
+`.beads/` is the git-ignored local database directory and cannot hold a shipped template).
+
+**Distribution mechanism (revised from the original "extension writes it automatically"
+plan):** rather than an extension writing the file on `session_start`, `using-superpowers`'s
+Session Start checklist carries a prose step: check `bd formula list | grep
+superpowers-workflow`, and if missing, copy the package's bundled
+`formulas/superpowers-workflow.formula.toml` into the project's `.beads/formulas/`, never
+overwriting a user-customized formula of the same name. This is an agent-executed step
+re-run each session, not a one-time automatic filesystem write — a deliberate
+simplification (avoids giving the extension its own `session_start` file-write side
+effect) accepted during implementation. The tradeoff: correctness depends on the agent
+following this step each session rather than a guaranteed one-time bootstrap.
 
 ```toml
 formula = "superpowers-workflow"
