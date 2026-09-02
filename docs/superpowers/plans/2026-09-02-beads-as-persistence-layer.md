@@ -675,9 +675,13 @@ In `CHANGELOG.md`, under `## [Unreleased]`, add a new `### Changed` bullet:
 - [ ] **Step 5: Verify**
 
 ```bash
-grep -n "superpowers-workflow" skills/using-superpowers/SKILL.md skills/using-superpowers/references/pi-tools.md README.md CHANGELOG.md
+grep -n "superpowers-workflow" skills/using-superpowers/SKILL.md skills/using-superpowers/references/pi-tools.md CHANGELOG.md
+grep -n "beads molecule" README.md
 ```
-Expected: at least one match in each of the four files.
+Expected: at least one match in each of `using-superpowers/SKILL.md`, `pi-tools.md`, and
+`CHANGELOG.md` for "superpowers-workflow"; at least one match in `README.md` for "beads
+molecule" (the README's verbatim replacement text describes the mechanism without naming
+the formula literally — checking for "beads molecule" is the correct proxy there).
 
 - [ ] **Step 6: Commit**
 
