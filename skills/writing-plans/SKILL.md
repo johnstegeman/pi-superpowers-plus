@@ -23,12 +23,12 @@ beads are created under.
 
 **Context:** If working in an isolated worktree, it should have been created via the `/skill:using-git-worktrees` skill at execution time.
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+**Plan output:** dynamic task beads under the molecule's `implement` step (see "Creating Tasks as Beads" below) — no markdown plan file is written.
 - (User preferences for plan location override this default)
 
 ## Boundaries
 - Read code and docs: yes
-- Write to docs/superpowers/plans/: yes
+- Write to docs/superpowers/plans/: no (plan output is beads, not a file)
 - Edit or create any other files: no
 
 ## Scope Check
@@ -149,7 +149,7 @@ see Task Separation below.)
 ## Creating Tasks as Beads
 
 Once the task breakdown above is written out in the plan document and has passed the
-lifecycle-duplicate check (Self-Review item 5), mirror it into real beads under the
+lifecycle-duplicate check (Self-Review item 4), mirror it into real beads under the
 `implement` step:
 
 ```bash
@@ -236,10 +236,11 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After the task beads and `plan-approved` gate are created and wired, close the
-`implement` step's own claim is left open — it stays `in_progress`, representing the
+After the task beads and `plan-approved` gate are created and wired, the `implement`
+step's own claim is left open on purpose — it stays `in_progress`, representing the
 whole implementation phase, until every task bead under it closes (see `executing-plans`
-Step 5). Nothing further to close here; the plan is now the bead graph itself.
+Step 3, "Rewrite Complete Development"). Nothing further to close here; the plan is now
+the bead graph itself.
 
 If planning stops early for any reason (blocked, redirected, session stopped), leave
 `implement` and any partially-created task beads as-is — the next session resumes by
