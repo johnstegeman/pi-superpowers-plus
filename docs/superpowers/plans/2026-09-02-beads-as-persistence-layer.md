@@ -26,7 +26,7 @@
 ### Task 1: Formula file + cook/pour verification
 
 **Files:**
-- Create: `.beads/formulas/superpowers-workflow.formula.toml` (in `pi-superpowers-plus`, so it ships as a template the extension's `using-superpowers` skill copies into a consuming project — see Task 8 for the copy-on-first-use logic)
+- Create: `formulas/superpowers-workflow.formula.toml` (at the package root, in `pi-superpowers-plus`, so it ships as a template — `.beads/` is the git-ignored local DB dir and is NOT in `package.json`'s `files`, so it cannot hold the shipped template). Add `"formulas/"` to `package.json`'s `files` array so it ships. The `using-superpowers` skill copies from here into a consuming project's `.beads/formulas/` at install time — see Task 7 for the copy-on-first-use logic.
 
 **Interfaces:**
 - Consumes: none.
@@ -34,7 +34,7 @@
 
 - [ ] **Step 1: Write the formula file**
 
-Create `.beads/formulas/superpowers-workflow.formula.toml`:
+Create `formulas/superpowers-workflow.formula.toml`:
 
 ```toml
 formula = "superpowers-workflow"
@@ -129,7 +129,7 @@ needs = ["smoke-test-approved"]
 
 - [ ] **Step 2: Verify it cooks with no errors**
 
-Run in a scratch beads-initialized directory (`mkdir -p /tmp/formula-check/.beads/formulas && cp .beads/formulas/superpowers-workflow.formula.toml /tmp/formula-check/.beads/formulas/ && cd /tmp/formula-check && bd init -q 2>&1 | tail -3`):
+Run in a scratch beads-initialized directory (`mkdir -p /tmp/formula-check/.beads/formulas && cp formulas/superpowers-workflow.formula.toml /tmp/formula-check/.beads/formulas/ && cd /tmp/formula-check && bd init -q 2>&1 | tail -3`):
 
 ```bash
 bd cook superpowers-workflow --var topic="test topic" --dry-run
@@ -148,7 +148,7 @@ Expected: `✓ Poured mol: created 16 issues` (12 steps + 3 gate beads + the roo
 - [ ] **Step 4: Commit**
 
 ```bash
-git add .beads/formulas/superpowers-workflow.formula.toml
+git add formulas/superpowers-workflow.formula.toml package.json
 git commit -m "feat: add superpowers-workflow beads formula"
 ```
 
@@ -596,7 +596,7 @@ Start: beads cleanup" section's numbered list (before the next `##` heading), ad
 ```markdown
 5. Confirm the superpowers workflow formula is available in this project:
    `bd formula list | grep superpowers-workflow`. If missing, copy it in from this
-   package's bundled copy (`.beads/formulas/superpowers-workflow.formula.toml` inside
+   package's bundled copy (`formulas/superpowers-workflow.formula.toml` inside
    the installed `pi-superpowers-plus` package directory) into the project's
    `.beads/formulas/superpowers-workflow.formula.toml`, then re-run
    `bd formula list` to confirm it's now visible. Never overwrite an existing formula
