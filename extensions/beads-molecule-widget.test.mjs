@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { parseMoleculeCurrent, moleculeWidgetLines } from "./beads-molecule-widget.mjs";
+import { moleculeWidgetLines, parseMoleculeCurrent } from "./beads-molecule-widget.mjs";
 
 // ---------- parser: malformed input never throws ----------
 assert.deepEqual(parseMoleculeCurrent(""), null);
@@ -61,7 +61,12 @@ assert.ok(lines.some((l) => l.includes("pending")));
 // ---------- phase label mapping ----------
 const explorePhase = {
   ...parsed,
-  current_step: { id: "bd-mol-meq", title: "Explore project context: x", issue_type: "task", formula_step_id: "explore" },
+  current_step: {
+    id: "bd-mol-meq",
+    title: "Explore project context: x",
+    issue_type: "task",
+    formula_step_id: "explore",
+  },
 };
 assert.ok(moleculeWidgetLines(explorePhase, 80)[0].includes("Brainstorming"));
 

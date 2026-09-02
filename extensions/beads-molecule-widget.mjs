@@ -10,7 +10,13 @@
 function charWidth(cp) {
   if (cp === 0x200d) return 0;
   if ((cp >= 0x0300 && cp <= 0x036f) || (cp >= 0xfe00 && cp <= 0xfe0f)) return 0;
-  if ((cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0x1f300 && cp <= 0x1f9ff)) return 2;
+  if (
+    (cp >= 0x1100 && cp <= 0x115f) ||
+    (cp >= 0x2e80 && cp <= 0xa4cf) ||
+    (cp >= 0xac00 && cp <= 0xd7a3) ||
+    (cp >= 0x1f300 && cp <= 0x1f9ff)
+  )
+    return 2;
   return 1;
 }
 export function displayWidth(s) {
@@ -107,8 +113,7 @@ function themeOf(theme) {
 /** Render the molecule widget. Returns [] when there's nothing to draw. */
 export function moleculeWidgetLines(state, width, theme) {
   const fg = themeOf(theme);
-  if (!state || !Array.isArray(state.steps) || state.steps.length === 0 || !(width > 0))
-    return [];
+  if (!state || !Array.isArray(state.steps) || state.steps.length === 0 || !(width > 0)) return [];
 
   const phase = phaseOf(state.current_step ?? state.next_step);
   const header = assemble(
@@ -150,9 +155,7 @@ export function moleculeWidgetLines(state, width, theme) {
     );
   }
 
-  const pendingCount = state.steps.filter(
-    (s) => s.status === "blocked" || s.status === "pending",
-  ).length;
+  const pendingCount = state.steps.filter((s) => s.status === "blocked" || s.status === "pending").length;
   if (pendingCount > 0) rows.push(fg("dim", truncToWidth(`+${pendingCount} pending`, width)));
 
   return [header.text, ...rows].filter(Boolean);

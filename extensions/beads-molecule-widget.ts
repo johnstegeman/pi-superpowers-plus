@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { parseMoleculeCurrent, moleculeWidgetLines } from "./beads-molecule-widget.mjs";
+import { moleculeWidgetLines, parseMoleculeCurrent } from "./beads-molecule-widget.mjs";
 
 export default function (pi: ExtensionAPI) {
   let uiRef: any = null;
@@ -35,9 +35,7 @@ export default function (pi: ExtensionAPI) {
         "beads-mol",
         (_tui: any, theme: any) => ({
           render: (width: number) =>
-            moleculeWidgetLines(activeMolecule, width - 1, uiRef?.theme ?? theme).map(
-              (l: string) => ` ${l}`,
-            ),
+            moleculeWidgetLines(activeMolecule, width - 1, uiRef?.theme ?? theme).map((l: string) => ` ${l}`),
           invalidate: () => {},
         }),
         { placement: "aboveEditor" },
